@@ -1,0 +1,11 @@
+{
+  //"UserSettings": {
+  //"OktaDomain": "https://ORGANIZATION.okta.com",
+  //"Username": "YOUR_USERNAME",
+  //"Password": "YOUR_PASSWORD",
+  //"AppUrl": "YOUR_AWS_APP_URL",
+  //"MfaType": "YOUR_MFA_TYPE",
+  //"ProfileName": "DESIRED_PROFILE_NAME",
+  //"Region": "YOUR_AWS_REGION"
+  //}
+}
