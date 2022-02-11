@@ -6,7 +6,7 @@ This project is built with DotNet 6.0 and is mandatory to install before using.
 
 You can find and install it [here](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
 
-Verify your DotNet version:
+Verify your dotnet version:
 
 ![image](https://user-images.githubusercontent.com/31489258/153608978-cced639e-af42-4485-8c15-5333325b0883.png)
 
@@ -39,7 +39,7 @@ If everything ran smoothly, you should see the following:
 okta-aws-cli <command>
 ```
 
-- `run` will run the cli, follow the prompts accordingly.
+- `run` will run the cli app, follow the prompts accordingly.
 - `configure` provides the option to configure your user settings in order to avoid prompting each time you run the cli.  
 You can skip configurations you wish to keep emtpy, I.E. - aws region.  
 The cli will prompt for mandatory parameters in case they are not in your user settings.
