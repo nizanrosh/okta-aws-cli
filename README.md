@@ -1,4 +1,8 @@
 # okta-aws-cli
+
+[![Build](https://github.com/nizanrosh/okta-aws-cli/workflows/Build/badge.svg)](https://github.com/nizanrosh/okta-aws-cli/actions/workflows/build.yml)
+[![License](https://badgen.net/github/license/nizanrosh/okta-aws-cli)](https://github.com/nizanrosh/okta-aws-cli/blob/main/LICENSE)
+
 A dotnet open source which provides aws credentials using Okta
 
 ## :sunny: .NET Runtime
