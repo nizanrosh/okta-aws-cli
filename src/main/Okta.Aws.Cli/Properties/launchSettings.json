@@ -9,7 +9,7 @@
     },
     "Okta.Aws.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "abc",
+      "commandLineArgs": "configure",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }

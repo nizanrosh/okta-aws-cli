@@ -21,7 +21,7 @@ namespace Okta.Aws.Cli.Okta.MFA
             return verifyResponse;
         }
 
-        private VerifyPushFactorOptions GetPushFactorOptions(string factorId, string stateToken) => new VerifyPushFactorOptions
+        private VerifyPushFactorOptions GetPushFactorOptions(string factorId, string stateToken) => new()
         {
             FactorId = factorId,
             AutoPush = true,

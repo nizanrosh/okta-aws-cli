@@ -19,6 +19,7 @@ namespace Okta.Aws.Cli.Extensions
 
             services.AddSingleton<IOktaAuthenticator, OktaAuthenticator>();
             services.AddSingleton<IOktaSamlProvider, OktaSamlProvider>();
+            services.AddSingleton<IOktaApiClient, OktaApiClient>();
             services.AddSingleton<ISamlExtractor, SamlExtractor>();
 
             return services;
