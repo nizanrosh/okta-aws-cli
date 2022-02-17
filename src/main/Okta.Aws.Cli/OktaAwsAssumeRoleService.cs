@@ -1,6 +1,7 @@
 ﻿using Okta.Aws.Cli.Aws;
 using Okta.Aws.Cli.FileSystem;
 using Okta.Aws.Cli.Okta;
+using Okta.Aws.Cli.Okta.Abstractions;
 
 namespace Okta.Aws.Cli
 {

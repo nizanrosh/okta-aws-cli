@@ -12,12 +12,11 @@ namespace Okta.Aws.Cli.Okta
 
     public class OktaAuthenticator : IOktaAuthenticator
     {
+        public IAuthenticationClient Client { get; private set; }
+
         private readonly ILogger<OktaAuthenticator> _logger;
         private readonly IConfiguration _configuration;
         private readonly IMfaFactory _mfaFactory;
-
-        private IAuthenticationClient _client;
-
 
         public OktaAuthenticator(ILogger<OktaAuthenticator> logger, IConfiguration configuration, IMfaFactory mfaFactory)
         {
@@ -28,13 +27,13 @@ namespace Okta.Aws.Cli.Okta
 
         public async Task<IAuthenticationResponse> Authenticate(CancellationToken cancellationToken)
         {
-            _client = GetOktaClient();
+            Client = GetOktaClient();
 
             var settings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 
             _logger.LogInformation($"Starting Okta user authentication, user: {settings.Username}.");
 
-            var authenticationResponse = await _client.AuthenticateAsync(new AuthenticateOptions
+            var authenticationResponse = await Client.AuthenticateAsync(new AuthenticateOptions
             {
                 Username = settings.Username,
                 Password = settings.Password
@@ -47,7 +46,7 @@ namespace Okta.Aws.Cli.Okta
 
                 var factorId = GetFactorId(authenticationResponse, settings.MfaType!);
 
-                authenticationResponse = await _mfaFactory.GetHandler(settings.MfaType).HandleMfa(_client, new MfaParameters(factorId, authenticationResponse.StateToken), cancellationToken);
+                authenticationResponse = await _mfaFactory.GetHandler(settings.MfaType!).HandleMfa(Client, new MfaParameters(factorId, authenticationResponse.StateToken), cancellationToken);
 
                 return authenticationResponse;
             }
@@ -64,26 +63,6 @@ namespace Okta.Aws.Cli.Okta
 
             return factorId;
         }
-
-        private async Task<IAuthenticationResponse> HandleMFA(string factorId, string stateToken)
-        {
-            var verifyResponse = await _client.VerifyFactorAsync(GetPushFactorOptions(factorId, stateToken));
-
-            while (verifyResponse.AuthenticationStatus == AuthenticationStatus.MfaChallenge)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(3));
-                verifyResponse = await _client.VerifyFactorAsync(GetPushFactorOptions(factorId, stateToken));
-            }
-
-            return verifyResponse;
-        }
-
-        private VerifyPushFactorOptions GetPushFactorOptions(string factorId, string stateToken) => new VerifyPushFactorOptions
-        {
-            FactorId = factorId,
-            AutoPush = true,
-            StateToken = stateToken
-        };
 
         private IAuthenticationClient GetOktaClient()
         {

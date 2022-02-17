@@ -22,8 +22,6 @@ namespace Okta.Aws.Cli.FileSystem
         {
             _logger.LogInformation("Updating local credentials file.");
 
-            var username = _config[LocalSystem.Username];
-
             var folderPath = FileHelper.GetUserAwsFolder(_config);
             var filePath = FileHelper.GetUserAwsCredentialsFile(_config);
 

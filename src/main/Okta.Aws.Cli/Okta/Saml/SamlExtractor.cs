@@ -11,11 +11,6 @@ using Okta.Aws.Cli.Okta.Constants;
 
 namespace Okta.Aws.Cli.Okta.Saml
 {
-    public interface ISamlExtractor
-    {
-        Task<SamlResponse> ExtractSamlFromHtml(string sessionToken);
-    }
-
     public class SamlExtractor : ISamlExtractor
     {
         private readonly ILogger<SamlExtractor> _logger;
@@ -27,39 +22,8 @@ namespace Okta.Aws.Cli.Okta.Saml
             _configuration = configuration;
         }
 
-        public async Task<SamlResponse> ExtractSamlFromHtml(string sessionToken)
+        public SamlResponse ExtractSamlFromHtml(string html)
         {
-            _logger.LogInformation("Extracting SAML assertion.");
-
-            var settings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
-
-            var cookieContainer = new CookieContainer();
-            var httpClientHandler = new HttpClientHandler
-            {
-                CookieContainer = cookieContainer
-            };
-
-            var httpClient = new HttpClient(httpClientHandler);
-
-            var sessionRequest = new SessionRequest(sessionToken);
-            var payload = JsonConvert.SerializeObject(sessionRequest);
-
-            var sessionResponse = await httpClient.PostAsJsonAsync($"{settings.OktaDomain}/api/v1/sessions", sessionRequest);
-
-            var sessionContent = await sessionResponse.Content.ReadAsStringAsync();
-            var sessionModel = JsonConvert.DeserializeObject<SessionResponse>(sessionContent);
-
-            if (string.IsNullOrEmpty(settings.AppUrl))
-            {
-                settings.AppUrl = await GetAppUrl(httpClient, sessionModel.Id);
-            }
-
-            cookieContainer.Add(new Uri(settings.OktaDomain!), new Cookie("sid", sessionModel.Id));
-
-            var awsResponse = await httpClient.GetAsync(settings.AppUrl);
-
-            var html = await awsResponse.Content.ReadAsStringAsync();
-
             var samlToken = ExtractFromHtml(html);
 
             return new SamlResponse(WebUtility.HtmlDecode(samlToken));

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Installer;
 
 Console.WriteLine("Installing okta-aws-cli...");
 
@@ -26,10 +27,10 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     var scope = EnvironmentVariableTarget.Machine;
     var oldValue = Environment.GetEnvironmentVariable(name, scope);
 
-    if (!oldValue!.Contains(appPath, StringComparison.InvariantCultureIgnoreCase))
+    if (InstallerHelper.ShouldUpdateWindowsPaths(oldValue!, appPath))
     {
-        var newValue = oldValue + @$"{appPath};";
-        Environment.SetEnvironmentVariable(name, newValue, scope);
+        var newPaths = InstallerHelper.GetNewWindowsPaths(oldValue!, appPath);
+        Environment.SetEnvironmentVariable(name, newPaths, scope);
     }
 }
 else
@@ -37,11 +38,9 @@ else
     var linuxProfileFile = $"/home/{Environment.UserName}/.profile";
     var paths = await File.ReadAllLinesAsync(linuxProfileFile);
 
-    var linuxAppPath = $"export PATH=\"$PATH:{appPath}\"";
-
-    if (!paths.Any(p => p.Equals(linuxAppPath)))
+    if (InstallerHelper.ShouldUpdateLinuxPaths(paths, appPath))
     {
-        var newPaths = paths.Concat(new[] { linuxAppPath });
+        var newPaths = InstallerHelper.GetNewLinuxPaths(paths, appPath);
         await File.WriteAllLinesAsync(linuxProfileFile, newPaths);
     }
 }
