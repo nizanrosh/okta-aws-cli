@@ -56,32 +56,32 @@ public class UserSettingsHandler : IUserSettingsHandler
     {
         var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 
-        if (userSettings?.OktaDomain == null)
+        if (string.IsNullOrEmpty(userSettings?.OktaDomain))
         {
             PromptForParameter("Enter your Okta domain", User.Settings.OktaDomain);
         }
 
-        if (userSettings?.Username == null)
+        if (string.IsNullOrEmpty(userSettings?.Username))
         {
             PromptForParameter("Enter your Okta username", User.Settings.Username);
         }
 
-        if (userSettings?.Password == null)
+        if (string.IsNullOrEmpty(userSettings?.Password))
         {
             PromptForParameter("Enter your Okta password", User.Settings.Password, true);
         }
 
-        if (userSettings?.MfaType == null)
+        if (string.IsNullOrEmpty(userSettings?.MfaType))
         {
             PromptForParameter<MfaTypes>("Enter your MFA type", User.Settings.MfaType);
         }
 
-        if (userSettings?.ProfileName == null)
+        if (string.IsNullOrEmpty(userSettings?.ProfileName))
         {
             PromptForParameter("Enter the desired AWS profile name", User.Settings.ProfileName, false, "default");
         }
 
-        if (userSettings?.Region == null)
+        if (string.IsNullOrEmpty(userSettings?.Region))
         {
             PromptForParameter("Enter your AWS region", User.Settings.Region, false, "eu-west-1");
         }

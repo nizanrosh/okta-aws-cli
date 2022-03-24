@@ -33,10 +33,11 @@ namespace Okta.Aws.Cli.Aws
             ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
 
             var (principalArn, roleArn) = GetArns(assertionXml);
+            var sessionDuration = GetDuration(assertionXml);
 
             var assumeRoleRequest = new AssumeRoleWithSAMLRequest
             {
-                DurationSeconds = 3600,
+                DurationSeconds = sessionDuration,
                 PrincipalArn = principalArn,
                 RoleArn = roleArn,
                 SAMLAssertion = saml
@@ -65,7 +66,7 @@ namespace Okta.Aws.Cli.Aws
             var attributeValues = assertionResponse.Assertion.AttributeStatement.Attribute.FirstOrDefault(a => a.Name == Role.Name)?.AttributeValue;
             ArgumentNullException.ThrowIfNull(attributeValues, nameof(attributeValues));
 
-            if(attributeValues.Count > 1)
+            if (attributeValues.Count > 1)
             {
                 Prompt.ColorSchema.Select = ConsoleColor.Yellow;
                 var attributeValue = Prompt.Select("Select a role (use arrow keys)", attributeValues);
@@ -79,6 +80,19 @@ namespace Okta.Aws.Cli.Aws
         {
             var arns = attributeValue.Split(',');
             return (arns.First(), arns.Last());
+        }
+
+        private int GetDuration(AssertionModel.Response assertionResponse)
+        {
+            var attributeValues = assertionResponse.Assertion.AttributeStatement.Attribute
+                .FirstOrDefault(a => a.Name == Session.Duration)?.AttributeValue;
+            ArgumentNullException.ThrowIfNull(attributeValues, nameof(attributeValues));
+
+            if (attributeValues.Count != 0) return int.Parse(attributeValues.First());
+
+            Prompt.ColorSchema.Select = ConsoleColor.Yellow;
+            var attributeValue = Prompt.Input<int>("Please enter session time in seconds");
+            return attributeValue;
         }
     }
 }
