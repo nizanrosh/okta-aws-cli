@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VersionPrefix>1.0.2</VersionPrefix>
+    <LangVersion>latest</LangVersion>
+
+    <Authors>Nizan Rosh</Authors>
+    <Company></Company>
+    <Copyright>Copyright © 2022-present Nizan Rosh</Copyright>
+    <PackageProjectUrl>https://github.com/nizanrosh/okta-aws-cli</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nizanrosh/okta-aws-cli</RepositoryUrl>
+    <Description>A dotnet open source which provides aws credentials using Okta</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+</Project>

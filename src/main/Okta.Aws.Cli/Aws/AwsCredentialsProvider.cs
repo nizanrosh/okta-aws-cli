@@ -63,7 +63,7 @@ namespace Okta.Aws.Cli.Aws
 
         private (string, string) GetArns(AssertionModel.Response assertionResponse)
         {
-            var attributeValues = assertionResponse.Assertion.AttributeStatement.Attribute.FirstOrDefault(a => a.Name == Role.Name)?.AttributeValue;
+            var attributeValues = assertionResponse?.Assertion?.AttributeStatement?.Attribute?.FirstOrDefault(a => a.Name == Role.Name)?.AttributeValue;
             ArgumentNullException.ThrowIfNull(attributeValues, nameof(attributeValues));
 
             if (attributeValues.Count > 1)
@@ -84,7 +84,7 @@ namespace Okta.Aws.Cli.Aws
 
         private int GetDuration(AssertionModel.Response assertionResponse)
         {
-            var attributeValues = assertionResponse.Assertion.AttributeStatement.Attribute
+            var attributeValues = assertionResponse?.Assertion?.AttributeStatement?.Attribute?
                 .FirstOrDefault(a => a.Name == Session.Duration)?.AttributeValue;
             ArgumentNullException.ThrowIfNull(attributeValues, nameof(attributeValues));
 

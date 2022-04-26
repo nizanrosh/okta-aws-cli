@@ -6,6 +6,6 @@ namespace Okta.Aws.Cli.Okta.Abstractions
     public class SessionResponse
     {
         [DataMember(Name = "id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
     }
 }
