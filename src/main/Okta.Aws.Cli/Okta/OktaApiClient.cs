@@ -33,6 +33,8 @@ public class OktaApiClient : IOktaApiClient
 
         var sessionId = await GetSessionId(sessionToken, userSettings.OktaDomain!, cancellationToken);
         var appUrl = string.IsNullOrEmpty(userSettings.AppUrl) ? await GetAppUrl(sessionId, cancellationToken) : userSettings.AppUrl;
+        ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
+
         var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
 
         return html;
@@ -45,15 +47,16 @@ public class OktaApiClient : IOktaApiClient
         var sessionRequest = new SessionRequest(sessionToken);
         var payload = JsonConvert.SerializeObject(sessionRequest);
 
-        var sessionResponse = await _httpClient.PostAsJsonAsync($"{oktaDomain}/api/v1/sessions", sessionRequest, cancellationToken: cancellationToken);
+        var sessionResponse = await _httpClient.PostAsJsonAsync($"{oktaDomain}/api/v1/sessions", sessionRequest, cancellationToken);
 
         var sessionContent = await sessionResponse.Content.ReadAsStringAsync(cancellationToken);
         var sessionModel = JsonConvert.DeserializeObject<SessionResponse>(sessionContent);
+        ArgumentNullException.ThrowIfNull(sessionModel.Id, nameof(sessionModel.Id));
 
         return sessionModel.Id;
     }
 
-    private async Task<string> GetAppUrl(string sessionId, CancellationToken cancellationToken)
+    private async Task<string?> GetAppUrl(string sessionId, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Getting aws app url...");
 

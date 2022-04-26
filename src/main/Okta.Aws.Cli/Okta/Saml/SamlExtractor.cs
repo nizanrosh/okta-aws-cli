@@ -29,7 +29,7 @@ namespace Okta.Aws.Cli.Okta.Saml
             return new SamlResponse(WebUtility.HtmlDecode(samlToken));
         }
 
-        private async Task<string> GetAppUrl(HttpClient httpClient, string sessionId)
+        private async Task<string?> GetAppUrl(HttpClient httpClient, string sessionId)
         {
             var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{_configuration[User.Settings.OktaDomain]}/api/v1/users/me/appLinks");
             httpRequest.Headers.Add("Cookie", $"sid={sessionId}");
@@ -48,7 +48,8 @@ namespace Okta.Aws.Cli.Okta.Saml
             doc.LoadHtml(html);
 
             var samlAttribute = doc.DocumentNode.SelectNodes("//form//input").FirstOrDefault();
-            var samlToken = samlAttribute.GetAttributeValue("value", null);
+            var samlToken = samlAttribute?.GetAttributeValue("value", null);
+            ArgumentNullException.ThrowIfNull(samlToken, nameof(samlToken));
 
             return samlToken;
         }

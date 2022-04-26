@@ -1,8 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Installer;
+using Kurukuru;
 
-Console.WriteLine("Installing okta-aws-cli...");
+Console.WriteLine("Installing okta-aws-cli...\n");
 
 var installerPath = Directory.GetCurrentDirectory();
 var rootFolder = Directory.GetParent(installerPath)?.FullName;
@@ -10,16 +11,23 @@ ArgumentNullException.ThrowIfNull(rootFolder, nameof(rootFolder));
 
 var appPath = Path.Combine(rootFolder, "app");
 
-var process = Process.Start(new ProcessStartInfo
+await Spinner.StartAsync("Installing...", async spinner =>
 {
-    FileName = "dotnet",
-    WorkingDirectory = "../",
-    Arguments = "publish --output app --source https://api.nuget.org/v3/index.json"
+    spinner.SymbolSucceed = new SymbolDefinition("V", "V");
+
+    var process = Process.Start(new ProcessStartInfo
+    {
+        FileName = "dotnet",
+        WorkingDirectory = "../",
+        Arguments = "publish --output app --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet"
+    });
+
+    await process!.WaitForExitAsync();
+
+    spinner.Succeed("Installed successfully!");
 });
 
-await process!.WaitForExitAsync();
-
-Console.WriteLine("Adding app to machine path...");
+Console.WriteLine("Adding app to machine path...\n");
 
 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 {
@@ -47,4 +55,5 @@ else
 
 
 
-Console.WriteLine("Done.");
+Console.WriteLine("Done, press any key to exit...");
+Console.ReadKey();
