@@ -47,6 +47,12 @@ public class UserSettingsHandler : IUserSettingsHandler
         }
 
         userSettings.ProfileName = Prompt.Input<string>("Enter the desired AWS profile name", userSettings.ProfileName);
+        //userSettings.ProfileNames = Prompt.List<string>(configure =>
+        //{
+        //    configure.Message = "Enter AWS profile name(s), press enter when done";
+        //    configure.DefaultValues = userSettings.ProfileNames;
+        //    configure.Maximum = 10;
+        //});
         userSettings.Region = Prompt.Input<string>("Enter your AWS region", userSettings.Region);
 
         return userSettings;

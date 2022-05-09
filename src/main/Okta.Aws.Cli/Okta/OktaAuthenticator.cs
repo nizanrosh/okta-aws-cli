@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Kurukuru;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Okta.Auth.Sdk;
@@ -26,8 +27,29 @@ namespace Okta.Aws.Cli.Okta
         public async Task<IAuthenticationResponse> Authenticate(CancellationToken cancellationToken)
         {
             var client = GetOktaClient();
-
             var settings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
+
+            var authenticationResponse = await GetAuthenticationResponse(client, settings, cancellationToken);
+
+            if (authenticationResponse.AuthenticationStatus == AuthenticationStatus.MfaRequired)
+            {
+                authenticationResponse =
+                    await GetMfaAuthenticationResponse(client, settings, authenticationResponse, cancellationToken);
+
+                return authenticationResponse;
+            }
+
+            _logger.LogInformation("Okta Authentication success.");
+
+            return authenticationResponse;
+        }
+
+        private async Task<IAuthenticationResponse> GetAuthenticationResponse(IAuthenticationClient client, UserSettings settings, CancellationToken cancellationToken)
+        {
+            using var spinner = new Spinner($"Starting authentication for {settings.Username}");
+            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
+
+            spinner.Start();
 
             _logger.LogInformation($"Starting Okta user authentication, user: {settings.Username}.");
 
@@ -37,19 +59,26 @@ namespace Okta.Aws.Cli.Okta
                 Password = settings.Password
             }, cancellationToken);
 
+            spinner.Succeed();
 
-            if (authenticationResponse.AuthenticationStatus == AuthenticationStatus.MfaRequired)
-            {
-                _logger.LogInformation($"MFA required, prompting for MFA of type {settings.MfaType}, check your phone.");
+            return authenticationResponse;
+        }
 
-                var factorId = GetFactorId(authenticationResponse, settings.MfaType!);
+        private async Task<IAuthenticationResponse> GetMfaAuthenticationResponse(IAuthenticationClient client,
+            UserSettings settings, IAuthenticationResponse originalResponse, CancellationToken cancellationToken)
+        {
+            using var spinner = new Spinner($"Prompting for MFA of type {settings.MfaType}, check your phone.");
+            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
-                authenticationResponse = await _mfaFactory.GetHandler(settings.MfaType!).HandleMfa(client, new MfaParameters(factorId, authenticationResponse.StateToken), cancellationToken);
+            spinner.Start();
 
-                return authenticationResponse;
-            }
+            _logger.LogInformation($"MFA required, prompting for MFA of type {settings.MfaType}, check your phone.");
 
-            _logger.LogInformation("Okta Authentication success.");
+            var factorId = GetFactorId(originalResponse, settings.MfaType!);
+
+            var authenticationResponse = await _mfaFactory.GetHandler(settings.MfaType!).HandleMfa(client, new MfaParameters(factorId, originalResponse.StateToken), cancellationToken);
+
+            spinner.Succeed();
 
             return authenticationResponse;
         }

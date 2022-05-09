@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Kurukuru;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Okta.Aws.Cli.Aws.Abstractions;
 using Okta.Aws.Cli.Constants;
@@ -18,9 +19,13 @@ namespace Okta.Aws.Cli.FileSystem
             _config = config;
         }
 
-        public Task UpdateCredentials(AwsCredentials credentials, CancellationToken cancellationToken)
+        public async Task UpdateCredentials(AwsCredentials credentials, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Updating local credentials file.");
+
+            var spinner = new Spinner("Updating local credentials file.");
+            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
+            spinner.Start();
 
             var folderPath = FileHelper.GetUserAwsFolder(_config);
             var filePath = FileHelper.GetUserAwsCredentialsFile(_config);
@@ -28,15 +33,20 @@ namespace Okta.Aws.Cli.FileSystem
             if (!Directory.Exists(folderPath))
             {
                 CreateDirectory(folderPath);
-                return CreateCredentialsFile(filePath, credentials, cancellationToken);
+                await CreateCredentialsFile(filePath, credentials, cancellationToken);
+                spinner.Succeed();
+                return;
             }
 
             if (!File.Exists(filePath))
             {
-                return CreateCredentialsFile(filePath, credentials, cancellationToken);
+                await CreateCredentialsFile(filePath, credentials, cancellationToken);
+                spinner.Succeed();
+                return;
             }
 
-            return UpdateFile(filePath, credentials, cancellationToken);
+            await UpdateFile(filePath, credentials, cancellationToken);
+            spinner.Succeed();
         }
 
         private async Task UpdateFile(string filePath, AwsCredentials credentials, CancellationToken cancellationToken)

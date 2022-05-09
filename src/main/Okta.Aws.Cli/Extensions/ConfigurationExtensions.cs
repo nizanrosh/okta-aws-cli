@@ -11,6 +11,9 @@ namespace Okta.Aws.Cli.Extensions
             var userSettingsPath = FileHelper.GetUserSettingsFile(config);
             configBuilder.AddJsonFile(userSettingsPath, true);
 
+            var versionInfoPath = FileHelper.GetVersionInfoFile(config);
+            configBuilder.AddJsonFile(versionInfoPath, true);
+
             return configBuilder;
         }
     }

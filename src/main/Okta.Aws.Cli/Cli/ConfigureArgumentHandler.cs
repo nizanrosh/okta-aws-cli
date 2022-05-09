@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Okta.Aws.Cli.Cli;
 
@@ -8,7 +9,7 @@ public class ConfigureArgumentHandler : CliArgumentHandlerBase
 
     private readonly IUserSettingsHandler _userSettingsHandler;
 
-    public ConfigureArgumentHandler(IUserSettingsHandler userSettingsHandler, IHostApplicationLifetime lifetime) : base(lifetime)
+    public ConfigureArgumentHandler(IUserSettingsHandler userSettingsHandler, IHostApplicationLifetime lifetime, IConfiguration configuration) : base(lifetime, configuration)
     {
         _userSettingsHandler = userSettingsHandler;
     }

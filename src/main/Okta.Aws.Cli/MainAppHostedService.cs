@@ -3,11 +3,11 @@ using Okta.Aws.Cli.Cli.Interfaces;
 
 namespace Okta.Aws.Cli;
 
-public class HostedService : IHostedService
+public class MainAppHostedService : IHostedService
 {
     private readonly ICliArgumentFactory _argumentFactory;
 
-    public HostedService(ICliArgumentFactory argumentFactory)
+    public MainAppHostedService(ICliArgumentFactory argumentFactory)
     {
         _argumentFactory = argumentFactory;
     }
