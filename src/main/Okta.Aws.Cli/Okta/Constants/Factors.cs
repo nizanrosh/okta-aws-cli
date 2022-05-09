@@ -3,5 +3,6 @@
     public class Factors
     {
         public const string Push = "push";
+        public const string Sms = "sms";
     }
 }
