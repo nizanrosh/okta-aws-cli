@@ -14,9 +14,7 @@ public class VersionArgumentHandler : CliArgumentHandlerBase
 
     public override Task HandleInternal(CancellationToken cancellationToken)
     {
-        var assemblyVersion = Assembly.GetEntryAssembly()?.GetName().Version;
-
-        var version = $"{assemblyVersion!.Major}.{assemblyVersion!.Minor}.{assemblyVersion!.Build}";
+        var version = GetAppVersion();
 
         Console.WriteLine(version);
 
