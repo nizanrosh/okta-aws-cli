@@ -40,6 +40,21 @@ namespace Okta.Aws.Cli.Extensions
             return services;
         }
 
+        public static IServiceCollection AddFileVersionUpdater(this IServiceCollection services)
+        {
+            services.AddSingleton<IFileVersionUpdater, FileVersionUpdater>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddFileSystemUpdaters(this IServiceCollection services)
+        {
+            services.AddFileCredentialsUpdater();
+            services.AddFileVersionUpdater();
+
+            return services;
+        }
+
         public static IServiceCollection AddCliArgumentHandling(this IServiceCollection services)
         {
             services.AddSingleton<ICliArgumentFactory, CliArgumentFactory>();
@@ -47,6 +62,7 @@ namespace Okta.Aws.Cli.Extensions
             services.AddSingleton<ICliArgumentHandler, RunArgumentHandler>();
             services.AddSingleton<ICliArgumentHandler, ConfigureArgumentHandler>();
             services.AddSingleton<ICliArgumentHandler, VersionArgumentHandler>();
+            //services.AddSingleton<ICliArgumentHandler, UpdateArgumentHandler>();
 
             services.AddSingleton<IInvalidArgumentHandler, InvalidArgumentHandler>();
 

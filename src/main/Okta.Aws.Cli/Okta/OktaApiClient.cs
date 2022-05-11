@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using Kurukuru;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -12,7 +13,6 @@ namespace Okta.Aws.Cli.Okta;
 
 public class OktaApiClient : IOktaApiClient
 {
-
     private readonly ILogger<OktaApiClient> _logger;
     private readonly IConfiguration _configuration;
     private readonly HttpClient _httpClient;
@@ -29,15 +29,30 @@ public class OktaApiClient : IOktaApiClient
 
     public async Task<string> GetSamlHtml(string sessionToken, CancellationToken cancellationToken)
     {
-        var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
+        var spinner = new Spinner("Logging in...");
+        spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
-        var sessionId = await GetSessionId(sessionToken, userSettings.OktaDomain!, cancellationToken);
-        var appUrl = string.IsNullOrEmpty(userSettings.AppUrl) ? await GetAppUrl(sessionId, cancellationToken) : userSettings.AppUrl;
-        ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
+        try
+        {
+            spinner.Start();
 
-        var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
+            var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 
-        return html;
+            var sessionId = await GetSessionId(sessionToken, userSettings.OktaDomain!, cancellationToken);
+            var appUrl = string.IsNullOrEmpty(userSettings.AppUrl) ? await GetAppUrl(sessionId, cancellationToken) : userSettings.AppUrl;
+            ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
+
+            var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
+
+            spinner.Succeed();
+
+            return html;
+        }
+        catch (Exception)
+        {
+            spinner.Fail();
+            throw;
+        }
     }
 
     private async Task<string> GetSessionId(string sessionToken, string oktaDomain, CancellationToken cancellationToken)
@@ -45,7 +60,6 @@ public class OktaApiClient : IOktaApiClient
         _logger.LogInformation("Getting session id...");
 
         var sessionRequest = new SessionRequest(sessionToken);
-        var payload = JsonConvert.SerializeObject(sessionRequest);
 
         var sessionResponse = await _httpClient.PostAsJsonAsync($"{oktaDomain}/api/v1/sessions", sessionRequest, cancellationToken);
 
@@ -68,7 +82,7 @@ public class OktaApiClient : IOktaApiClient
 
         var appLinks = JsonConvert.DeserializeObject<AppLinks[]>(content);
 
-        return appLinks?.FirstOrDefault(al => al.AppName == AppNames.Amazon)?.LinkUrl;
+        return appLinks.FirstOrDefault(al => al.AppName == AppNames.Amazon)?.LinkUrl;
     }
 
     private async Task<string> GetHtml(string sessionId, string oktaDomain, string appUrl, CancellationToken cancellationToken)

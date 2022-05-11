@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Kurukuru;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Okta.Aws.Cli.Aws.Abstractions;
 using Okta.Aws.Cli.Constants;
@@ -18,25 +19,43 @@ namespace Okta.Aws.Cli.FileSystem
             _config = config;
         }
 
-        public Task UpdateCredentials(AwsCredentials credentials, CancellationToken cancellationToken)
+        public async Task UpdateCredentials(AwsCredentials credentials, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Updating local credentials file.");
 
-            var folderPath = FileHelper.GetUserAwsFolder(_config);
-            var filePath = FileHelper.GetUserAwsCredentialsFile(_config);
+            var spinner = new Spinner("Updating local credentials file.");
+            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
-            if (!Directory.Exists(folderPath))
+            try
             {
-                CreateDirectory(folderPath);
-                return CreateCredentialsFile(filePath, credentials, cancellationToken);
-            }
+                spinner.Start();
 
-            if (!File.Exists(filePath))
+                var folderPath = FileHelper.GetUserAwsFolder(_config);
+                var filePath = FileHelper.GetUserAwsCredentialsFile(_config);
+
+                if (!Directory.Exists(folderPath))
+                {
+                    CreateDirectory(folderPath);
+                    await CreateCredentialsFile(filePath, credentials, cancellationToken);
+                    spinner.Succeed();
+                    return;
+                }
+
+                if (!File.Exists(filePath))
+                {
+                    await CreateCredentialsFile(filePath, credentials, cancellationToken);
+                    spinner.Succeed();
+                    return;
+                }
+
+                await UpdateFile(filePath, credentials, cancellationToken);
+                spinner.Succeed();
+            }
+            catch (Exception)
             {
-                return CreateCredentialsFile(filePath, credentials, cancellationToken);
+                spinner.Fail();
+                throw;
             }
-
-            return UpdateFile(filePath, credentials, cancellationToken);
         }
 
         private async Task UpdateFile(string filePath, AwsCredentials credentials, CancellationToken cancellationToken)

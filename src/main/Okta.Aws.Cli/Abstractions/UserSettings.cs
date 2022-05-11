@@ -8,6 +8,7 @@
         public string? AppUrl { get; set; }
         public string? MfaType { get; set; }
         public string? ProfileName { get; set; }
+        //public IEnumerable<string>? ProfileNames { get; set; }
         public string? Region { get; set; }
     }
 

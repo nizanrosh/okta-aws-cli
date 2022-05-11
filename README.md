@@ -58,7 +58,7 @@ The user settings file can be found at the users home directory.
 
 You can use `okta-aws-cli configure` to configure the user settings file or alternatively, fill it manually.
 
-UserSettings exmaple:
+UserSettings example:
 
 ```json
 {
@@ -74,7 +74,7 @@ UserSettings exmaple:
 }
 ```
 
-## :books: Exmaples
+## :books: Examples
 
 ### `run`
 ![run](https://user-images.githubusercontent.com/31489258/153608221-e7d2b06c-8bf8-4055-950b-43ad19b7b27a.gif)
