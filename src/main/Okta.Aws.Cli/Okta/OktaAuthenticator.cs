@@ -49,19 +49,27 @@ namespace Okta.Aws.Cli.Okta
             using var spinner = new Spinner($"Starting authentication for {settings.Username}");
             spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
-            spinner.Start();
-
-            _logger.LogInformation($"Starting Okta user authentication, user: {settings.Username}.");
-
-            var authenticationResponse = await client.AuthenticateAsync(new AuthenticateOptions
+            try
             {
-                Username = settings.Username,
-                Password = settings.Password
-            }, cancellationToken);
+                spinner.Start();
 
-            spinner.Succeed();
+                _logger.LogInformation($"Starting Okta user authentication, user: {settings.Username}.");
 
-            return authenticationResponse;
+                var authenticationResponse = await client.AuthenticateAsync(new AuthenticateOptions
+                {
+                    Username = settings.Username,
+                    Password = settings.Password
+                }, cancellationToken);
+
+                spinner.Succeed();
+
+                return authenticationResponse;
+            }
+            catch (Exception)
+            {
+                spinner.Fail();
+                throw;
+            }
         }
 
         private async Task<IAuthenticationResponse> GetMfaAuthenticationResponse(IAuthenticationClient client,
@@ -70,24 +78,36 @@ namespace Okta.Aws.Cli.Okta
             using var spinner = new Spinner($"Prompting for MFA of type {settings.MfaType}, check your phone.");
             spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
-            spinner.Start();
+            try
+            {
+                spinner.Start();
 
-            _logger.LogInformation($"MFA required, prompting for MFA of type {settings.MfaType}, check your phone.");
+                _logger.LogInformation($"MFA required, prompting for MFA of type {settings.MfaType}, check your phone.");
 
-            var factorId = GetFactorId(originalResponse, settings.MfaType!);
+                var factorId = GetFactorId(originalResponse, settings.MfaType!);
 
-            var authenticationResponse = await _mfaFactory.GetHandler(settings.MfaType!).HandleMfa(client, new MfaParameters(factorId, originalResponse.StateToken), cancellationToken);
+                var authenticationResponse = await _mfaFactory.GetHandler(settings.MfaType!).HandleMfa(client, new MfaParameters(factorId, originalResponse.StateToken), cancellationToken);
 
-            spinner.Succeed();
+                spinner.Succeed();
 
-            return authenticationResponse;
+                return authenticationResponse;
+            }
+            catch (Exception)
+            {
+                spinner.Fail();
+                throw;
+            }
         }
 
         private string GetFactorId(IAuthenticationResponse authenticationResponse, string mfaType)
         {
             var resources = JsonConvert.DeserializeObject<AuthenticationFactors>(authenticationResponse.Embedded.GetRaw());
-            var factorId = resources?.Factors?.FirstOrDefault(f => f.FactorType == mfaType)!.Id;
-            ArgumentNullException.ThrowIfNull(factorId, nameof(factorId));
+            var factorId = resources.Factors?.FirstOrDefault(f => f.FactorType == mfaType)?.Id;
+            if (string.IsNullOrEmpty(factorId))
+            {
+                throw new ArgumentNullException(nameof(factorId),
+                    $"Could not get factor id for MFA {mfaType}.");
+            }
 
             return factorId;
         }

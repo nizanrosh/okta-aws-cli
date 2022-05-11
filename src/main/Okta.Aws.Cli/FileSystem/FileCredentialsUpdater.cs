@@ -25,28 +25,37 @@ namespace Okta.Aws.Cli.FileSystem
 
             var spinner = new Spinner("Updating local credentials file.");
             spinner.SymbolSucceed = new SymbolDefinition("V", "V");
-            spinner.Start();
 
-            var folderPath = FileHelper.GetUserAwsFolder(_config);
-            var filePath = FileHelper.GetUserAwsCredentialsFile(_config);
-
-            if (!Directory.Exists(folderPath))
+            try
             {
-                CreateDirectory(folderPath);
-                await CreateCredentialsFile(filePath, credentials, cancellationToken);
-                spinner.Succeed();
-                return;
-            }
+                spinner.Start();
 
-            if (!File.Exists(filePath))
+                var folderPath = FileHelper.GetUserAwsFolder(_config);
+                var filePath = FileHelper.GetUserAwsCredentialsFile(_config);
+
+                if (!Directory.Exists(folderPath))
+                {
+                    CreateDirectory(folderPath);
+                    await CreateCredentialsFile(filePath, credentials, cancellationToken);
+                    spinner.Succeed();
+                    return;
+                }
+
+                if (!File.Exists(filePath))
+                {
+                    await CreateCredentialsFile(filePath, credentials, cancellationToken);
+                    spinner.Succeed();
+                    return;
+                }
+
+                await UpdateFile(filePath, credentials, cancellationToken);
+                spinner.Succeed();
+            }
+            catch (Exception)
             {
-                await CreateCredentialsFile(filePath, credentials, cancellationToken);
-                spinner.Succeed();
-                return;
+                spinner.Fail();
+                throw;
             }
-
-            await UpdateFile(filePath, credentials, cancellationToken);
-            spinner.Succeed();
         }
 
         private async Task UpdateFile(string filePath, AwsCredentials credentials, CancellationToken cancellationToken)

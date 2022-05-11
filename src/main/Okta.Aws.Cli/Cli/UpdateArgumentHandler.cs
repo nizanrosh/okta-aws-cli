@@ -1,6 +1,4 @@
-﻿using System.Net.Cache;
-using System.Runtime.InteropServices;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Okta.Aws.Cli.Abstractions;
@@ -21,7 +19,7 @@ public class UpdateArgumentHandler : CliArgumentHandlerBase
         _gitHubApiClient = gitHubApiClient;
     }
 
-    public override async Task HandlerInternal(CancellationToken cancellationToken)
+    public override async Task HandleInternal(CancellationToken cancellationToken)
     {
         var versionInfo = Configuration.GetSection(nameof(VersionInfo)).Get<VersionInfo>();
         if (!CanUpdate(versionInfo)) return;
@@ -40,8 +38,8 @@ public class UpdateArgumentHandler : CliArgumentHandlerBase
 
         Directory.CreateDirectory("release");
 
-        var result =
-            await _gitHubApiClient.DownloadRelease(latestRelease.ZipballUrl, latestRelease.Name, cancellationToken);
+        //var result =
+        //    await _gitHubApiClient.DownloadRelease(latestRelease.ZipballUrl, latestRelease.Name, cancellationToken);
     }
 
     private (Version, Version) GetVersions(VersionInfo versionInfo)

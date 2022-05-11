@@ -15,7 +15,7 @@ public class InvalidArgumentHandler : CliArgumentHandlerBase, IInvalidArgumentHa
         _handlers = handlers;
     }
 
-    public override Task HandlerInternal(CancellationToken cancellationToken)
+    public override Task HandleInternal(CancellationToken cancellationToken)
     {
         Console.WriteLine("okta-aws-cli: argument command: invalid choice, valid choices are:\n");
 

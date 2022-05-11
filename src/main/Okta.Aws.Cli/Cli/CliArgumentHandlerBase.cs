@@ -20,12 +20,12 @@ public abstract class CliArgumentHandlerBase : ICliArgumentHandler
 
     public virtual async Task Handle(CancellationToken cancellationToken)
     {
-        await HandlerInternal(cancellationToken);
+        await HandleInternal(cancellationToken);
         CheckForUpdates();
         Lifetime.StopApplication();
     }
 
-    public abstract Task HandlerInternal(CancellationToken cancellationToken);
+    public abstract Task HandleInternal(CancellationToken cancellationToken);
 
     private void CheckForUpdates()
     {

@@ -32,19 +32,27 @@ public class OktaApiClient : IOktaApiClient
         var spinner = new Spinner("Logging in...");
         spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
-        spinner.Start();
+        try
+        {
+            spinner.Start();
 
-        var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
+            var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 
-        var sessionId = await GetSessionId(sessionToken, userSettings.OktaDomain!, cancellationToken);
-        var appUrl = string.IsNullOrEmpty(userSettings.AppUrl) ? await GetAppUrl(sessionId, cancellationToken) : userSettings.AppUrl;
-        ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
+            var sessionId = await GetSessionId(sessionToken, userSettings.OktaDomain!, cancellationToken);
+            var appUrl = string.IsNullOrEmpty(userSettings.AppUrl) ? await GetAppUrl(sessionId, cancellationToken) : userSettings.AppUrl;
+            ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
 
-        var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
+            var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
 
-        spinner.Succeed();
+            spinner.Succeed();
 
-        return html;
+            return html;
+        }
+        catch (Exception)
+        {
+            spinner.Fail();
+            throw;
+        }
     }
 
     private async Task<string> GetSessionId(string sessionToken, string oktaDomain, CancellationToken cancellationToken)

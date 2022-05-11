@@ -17,7 +17,7 @@ public class RunArgumentHandler : CliArgumentHandlerBase
         _userSettingsHandler = userSettingsHandler;
     }
 
-    public override async Task HandlerInternal(CancellationToken cancellationToken)
+    public override async Task HandleInternal(CancellationToken cancellationToken)
     {
         Console.WriteLine(FiggleFonts.Standard.Render("Okta-Aws-Cli"));
 

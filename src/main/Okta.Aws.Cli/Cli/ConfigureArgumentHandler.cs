@@ -14,7 +14,7 @@ public class ConfigureArgumentHandler : CliArgumentHandlerBase
         _userSettingsHandler = userSettingsHandler;
     }
 
-    public override Task HandlerInternal(CancellationToken cancellationToken)
+    public override Task HandleInternal(CancellationToken cancellationToken)
     {
         return _userSettingsHandler.ConfigureUserSettingsFile(cancellationToken);
     }

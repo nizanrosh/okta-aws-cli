@@ -12,7 +12,7 @@ public class VersionArgumentHandler : CliArgumentHandlerBase
     {
     }
 
-    public override Task HandlerInternal(CancellationToken cancellationToken)
+    public override Task HandleInternal(CancellationToken cancellationToken)
     {
         var assemblyVersion = Assembly.GetEntryAssembly()?.GetName().Version;
 
