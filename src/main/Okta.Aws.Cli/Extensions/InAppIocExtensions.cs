@@ -16,6 +16,7 @@ namespace Okta.Aws.Cli.Extensions
         {
             services.AddSingleton<IMfaFactory, MfaFactory>();
             services.AddSingleton<IMfaHandler, MfaPushHandler>();
+            services.AddSingleton<IMfaHandler, MfaSmsHandler>();
 
             services.AddSingleton<IOktaAuthenticator, OktaAuthenticator>();
             services.AddSingleton<IOktaSamlProvider, OktaSamlProvider>();
