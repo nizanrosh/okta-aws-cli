@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v6.0": {
-      "Installer/1.0.2": {
+      "Installer/1.1.0": {
         "dependencies": {
           "Kurukuru": "1.4.2"
         },
@@ -25,7 +25,7 @@
     }
   },
   "libraries": {
-    "Installer/1.0.2": {
+    "Installer/1.1.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

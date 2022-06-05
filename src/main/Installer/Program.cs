@@ -19,7 +19,8 @@ await Spinner.StartAsync("Installing...", async spinner =>
     {
         FileName = "dotnet",
         WorkingDirectory = "../",
-        Arguments = "publish --output app --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet"
+        Arguments =
+            "publish --output app --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet"
     });
 
     await process!.WaitForExitAsync();
@@ -41,7 +42,7 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         Environment.SetEnvironmentVariable(name, newPaths, scope);
     }
 }
-else
+else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 {
     var linuxProfileFile = $"/home/{Environment.UserName}/.profile";
     var paths = await File.ReadAllLinesAsync(linuxProfileFile);
@@ -52,8 +53,15 @@ else
         await File.WriteAllLinesAsync(linuxProfileFile, newPaths);
     }
 }
+else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+{
+    var pathsFile = "/etc/paths.d/okta-aws-cli";
 
-
+    if (!File.Exists(pathsFile))
+    {
+        await File.WriteAllTextAsync(pathsFile, appPath);
+    }
+}
 
 Console.WriteLine("Done, press any key to exit...");
 Console.ReadKey();
