@@ -58,6 +58,15 @@ public class UserSettingsHandler : IUserSettingsHandler
         return userSettings;
     }
 
+    public void PrettyPrint(UserSettings userSettings)
+    {
+        Console.WriteLine($"Okta Domain: {userSettings.OktaDomain}");
+        Console.WriteLine($"Username: {userSettings.Username}");
+        Console.WriteLine($"MFA type: {userSettings.MfaType}");
+        Console.WriteLine($"AWS profile: {userSettings.ProfileName}");
+        Console.WriteLine($"AWS region: {userSettings.Region}");
+    }
+
     public void SanityCheck()
     {
         var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
