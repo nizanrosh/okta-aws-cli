@@ -1,12 +1,5 @@
 {
   "profiles": {
-    "WSL": {
-      "commandName": "WSL2",
-      "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
-      },
-      "distributionName": ""
-    },
     "Okta.Aws.Cli": {
       "commandName": "Project",
       "commandLineArgs": "whoami",
