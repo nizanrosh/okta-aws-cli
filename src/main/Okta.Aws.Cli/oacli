@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+if [ ! -n "${OKTA_AWS_CLI_HOME+x}" ]; then
+  # echo "OKTA_AWS_CLI_HOME is not set."
+
+  ## resolve links - $0 may be a symlink
+  PRG="$0"
+  while [ -h "$PRG" ] ; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+    else
+    PRG=`dirname "$PRG"`"/$link"
+    fi
+  done
+
+
+  OKTA_AWS_CLI_HOME=`dirname "$PRG"`
+
+  # make it fully qualified
+  OKTA_AWS_CLI_HOME=`cd "$OKTA_AWS_CLI_HOME" && pwd`
+  # echo "okta-aws-cli Home: $OKTA_AWS_CLI_HOME"
+fi
+
+export OKTA_AWS_CLI_HOME
+$OKTA_AWS_CLI_HOME/okta-aws-cli.exe ${1+"$@"}
