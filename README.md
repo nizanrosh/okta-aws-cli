@@ -31,7 +31,7 @@ dotnet Installer.dll
 
 Open terminal / cmd and run:
 ```
-okta-aws-cli --version
+okta-aws-cli --version | oacli --version
 ```
 If everything ran smoothly, you should see the following:
 
@@ -40,14 +40,15 @@ If everything ran smoothly, you should see the following:
 ## :tada: Usage
 
 ```cmd
-okta-aws-cli <command>
+okta-aws-cli | oacli <command>
 ```
 
 - `run` will run the cli app, follow the prompts accordingly.
 - `configure` provides the option to configure your user settings in order to avoid prompting each time you run the cli.  
 You can skip configurations you wish to keep emtpy, I.E. - aws region.  
 The cli will prompt for mandatory parameters in case they are not in your user settings.
-- `--version` will display the current version of the app
+- `--version` will display the current version of the app.
+- `whoami` will display the current configured user.
 
 ## :clipboard: User Settings
 
