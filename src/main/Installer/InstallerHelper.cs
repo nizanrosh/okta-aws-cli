@@ -1,4 +1,6 @@
-﻿namespace Installer;
+﻿using System.Diagnostics;
+
+namespace Installer;
 
 public static class InstallerHelper
 {
@@ -28,4 +30,17 @@ public static class InstallerHelper
     }
 
     public static bool ShouldUpdateLinuxPaths(string[] paths, string appPath) => !paths.Any(p => p.Equals($"export PATH=\"$PATH:{appPath}\""));
+
+    public static Task MakeOacliExecutable(string path)
+    {
+        var oacliExecutable = Process.Start(new ProcessStartInfo
+        {
+            FileName = "chmod",
+            WorkingDirectory = path,
+            Arguments =
+                "+x oacli"
+        });
+
+        return oacliExecutable!.WaitForExitAsync();
+    }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Installer;
 using Kurukuru;
@@ -52,6 +53,8 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         var newPaths = InstallerHelper.GetNewLinuxPaths(paths, appPath);
         await File.WriteAllLinesAsync(linuxProfileFile, newPaths);
     }
+    
+    await InstallerHelper.MakeOacliExecutable(appPath);
 }
 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 {
@@ -61,6 +64,8 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
     {
         await File.WriteAllTextAsync(pathsFile, appPath);
     }
+
+    await InstallerHelper.MakeOacliExecutable(appPath);
 }
 
 Console.WriteLine("Done, press any key to exit...");
