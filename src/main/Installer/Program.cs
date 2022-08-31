@@ -54,15 +54,7 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         await File.WriteAllLinesAsync(linuxProfileFile, newPaths);
     }
     
-    var oacliExecutable = Process.Start(new ProcessStartInfo
-    {
-        FileName = "chmod",
-        WorkingDirectory = appPath,
-        Arguments =
-            "+x oacli"
-    });
-
-    await oacliExecutable!.WaitForExitAsync();
+    await InstallerHelper.MakeOacliExecutable(appPath);
 }
 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 {
@@ -72,16 +64,8 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
     {
         await File.WriteAllTextAsync(pathsFile, appPath);
     }
-    
-    var oacliExecutable = Process.Start(new ProcessStartInfo
-    {
-        FileName = "chmod",
-        WorkingDirectory = appPath,
-        Arguments =
-            "+x oacli"
-    });
 
-    await oacliExecutable!.WaitForExitAsync();
+    await InstallerHelper.MakeOacliExecutable(appPath);
 }
 
 Console.WriteLine("Done, press any key to exit...");
