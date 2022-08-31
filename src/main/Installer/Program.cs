@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Installer;
 using Kurukuru;
@@ -52,6 +53,16 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         var newPaths = InstallerHelper.GetNewLinuxPaths(paths, appPath);
         await File.WriteAllLinesAsync(linuxProfileFile, newPaths);
     }
+    
+    var oacliExecutable = Process.Start(new ProcessStartInfo
+    {
+        FileName = "chmod",
+        WorkingDirectory = appPath,
+        Arguments =
+            "+x oacli"
+    });
+
+    await oacliExecutable!.WaitForExitAsync();
 }
 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 {
@@ -61,6 +72,16 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
     {
         await File.WriteAllTextAsync(pathsFile, appPath);
     }
+    
+    var oacliExecutable = Process.Start(new ProcessStartInfo
+    {
+        FileName = "chmod",
+        WorkingDirectory = appPath,
+        Arguments =
+            "+x oacli"
+    });
+
+    await oacliExecutable!.WaitForExitAsync();
 }
 
 Console.WriteLine("Done, press any key to exit...");

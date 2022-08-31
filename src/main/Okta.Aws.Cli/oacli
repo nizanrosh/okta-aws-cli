@@ -24,4 +24,4 @@ if [ ! -n "${OKTA_AWS_CLI_HOME+x}" ]; then
 fi
 
 export OKTA_AWS_CLI_HOME
-$OKTA_AWS_CLI_HOME/okta-aws-cli.exe ${1+"$@"}
+$OKTA_AWS_CLI_HOME/okta-aws-cli ${1+"$@"}
