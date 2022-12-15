@@ -2,14 +2,17 @@
 using System.Runtime.InteropServices;
 using Installer;
 using Kurukuru;
+using Microsoft.Extensions.Configuration;
 
 Console.WriteLine("Installing okta-aws-cli...\n");
 
-var installerPath = Directory.GetCurrentDirectory();
-var rootFolder = Directory.GetParent(installerPath)?.FullName;
-ArgumentNullException.ThrowIfNull(rootFolder, nameof(rootFolder));
+var configuration = new ConfigurationBuilder()
+    .AddCommandLine(args)
+    .Build();
 
-var appPath = Path.Combine(rootFolder, "app");
+
+var appPath = InstallerHelper.GetAppPath(configuration);
+var output = InstallerHelper.GetOutputPath(configuration);
 
 await Spinner.StartAsync("Installing...", async spinner =>
 {
@@ -20,7 +23,7 @@ await Spinner.StartAsync("Installing...", async spinner =>
         FileName = "dotnet",
         WorkingDirectory = "../",
         Arguments =
-            "publish --output app --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet"
+            $"publish --output {output} --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet"
     });
 
     await process!.WaitForExitAsync();

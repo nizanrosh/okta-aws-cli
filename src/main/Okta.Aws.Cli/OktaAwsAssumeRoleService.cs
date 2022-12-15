@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Okta.Aws.Cli.Aws;
 using Okta.Aws.Cli.FileSystem;
 using Okta.Aws.Cli.Okta.Abstractions;

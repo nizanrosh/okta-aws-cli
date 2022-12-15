@@ -16,5 +16,14 @@ namespace Okta.Aws.Cli.Extensions
 
             return configBuilder;
         }
+
+        public static IConfigurationBuilder ConfigureArnMappings(this IConfigurationBuilder configBuilder)
+        {
+            var config = configBuilder.Build();
+            var arnMappingsPath = FileHelper.GetArnMappingsFile(config);
+            configBuilder.AddJsonFile(arnMappingsPath, true);
+
+            return configBuilder;
+        }
     }
 }

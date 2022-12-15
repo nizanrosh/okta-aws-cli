@@ -55,4 +55,7 @@ public static class FileHelper
 
     public static string GetVersionInfoFile(IConfiguration configuration) =>
         $"{GetUserSettingsFolder(configuration)}/versioninfo.json";
+
+    public static string GetArnMappingsFile(IConfiguration configuration) =>
+        $"{GetUserSettingsFolder(configuration)}/arnmappings.json";
 }

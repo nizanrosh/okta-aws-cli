@@ -1,4 +1,6 @@
-﻿namespace Installer;
+﻿using Microsoft.Extensions.Configuration;
+
+namespace Installer;
 
 public static class InstallerHelper
 {
@@ -28,4 +30,26 @@ public static class InstallerHelper
     }
 
     public static bool ShouldUpdateLinuxPaths(string[] paths, string appPath) => !paths.Any(p => p.Equals($"export PATH=\"$PATH:{appPath}\""));
+
+    public static string GetAppPath(IConfiguration configuration)
+    {
+        var path = configuration["path"];
+        if (!string.IsNullOrEmpty(path)) return path;
+
+        var installerPath = Directory.GetCurrentDirectory();
+        var rootFolder = Directory.GetParent(installerPath)?.FullName;
+        ArgumentNullException.ThrowIfNull(rootFolder, nameof(rootFolder));
+
+        var appPath = Path.Combine(rootFolder, "app");
+
+        return appPath;
+    }
+
+    public static string GetOutputPath(IConfiguration configuration)
+    {
+        var path = configuration["output"];
+        if (!string.IsNullOrEmpty(path)) return path;
+
+        return "app";
+    }
 }

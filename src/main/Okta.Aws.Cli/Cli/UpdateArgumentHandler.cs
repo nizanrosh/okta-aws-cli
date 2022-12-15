@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.IO.Compression;
+using Amazon.Runtime.Internal.Transform;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Okta.Aws.Cli.Abstractions;
@@ -22,7 +24,13 @@ public class UpdateArgumentHandler : CliArgumentHandlerBase
     public override async Task HandleInternal(CancellationToken cancellationToken)
     {
         var versionInfo = Configuration.GetSection(nameof(VersionInfo)).Get<VersionInfo>();
-        if (!CanUpdate(versionInfo)) return;
+
+        var (result, message) = CanUpdate(versionInfo);
+        if (!result)
+        {
+            _logger.LogError(message);
+            //return;
+        }
 
         var (latestVersion, currentVersion) = GetVersions(versionInfo);
         //if(latestVersion <= currentVersion) return;
@@ -35,11 +43,27 @@ public class UpdateArgumentHandler : CliArgumentHandlerBase
         }
 
         var latestRelease = releases.Releases.MaxBy(r => r.Name);
+        if (string.IsNullOrEmpty(latestRelease?.ZipballUrl) || string.IsNullOrEmpty(latestRelease.Name))
+        {
+            //todo - log/exception this
+            return;
+        }
 
         Directory.CreateDirectory("release");
 
-        //var result =
-        //    await _gitHubApiClient.DownloadRelease(latestRelease.ZipballUrl, latestRelease.Name, cancellationToken);
+        if (!File.Exists($"./release/{latestRelease.Name}.zip"))
+        {
+            var downloadResult =
+                await _gitHubApiClient.DownloadRelease(latestRelease.ZipballUrl, latestRelease.Name, cancellationToken);
+
+            if (!downloadResult)
+            {
+                //todo - log/exception this
+                return;
+            }
+        }
+
+        ZipFile.ExtractToDirectory($"release/{latestRelease.Name}.zip", $"release/{latestRelease.Name}");
     }
 
     private (Version, Version) GetVersions(VersionInfo versionInfo)
@@ -50,10 +74,21 @@ public class UpdateArgumentHandler : CliArgumentHandlerBase
         return (Version.Parse(latestVersion), Version.Parse(currentVersion));
     }
 
-    private bool CanUpdate(VersionInfo? versionInfo)
+    private (bool, string) CanUpdate(VersionInfo? versionInfo)
     {
-        if (versionInfo == null || string.IsNullOrEmpty(versionInfo.LatestVersion) || string.IsNullOrEmpty(versionInfo.CurrentVersion)) return false;
+        if (versionInfo == null || string.IsNullOrEmpty(versionInfo.LatestVersion) ||
+            string.IsNullOrEmpty(versionInfo.CurrentVersion))
+        {
+            var message = "Version information could not be distinguished.";
+            return (false, message);
+        }
 
-        return true;
+        if (string.Equals(versionInfo.CurrentVersion, versionInfo.LatestVersion))
+        {
+            var message = $"You are already on the latest version, {versionInfo.CurrentVersion}";
+            return (false, message);
+        }
+
+        return (true, string.Empty);
     }
 }

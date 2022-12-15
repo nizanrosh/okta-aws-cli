@@ -4,5 +4,6 @@ namespace Okta.Aws.Cli.FileSystem;
 
 public interface IFileVersionUpdater
 {
-    Task UpdateVersionInfo(VersionInfo versionInfo, CancellationToken cancellationToken);
+    Task UpdateVersionInfoAsync(VersionInfo versionInfo, CancellationToken cancellationToken);
+    void UpdateVersionInfo(VersionInfo versionInfo);
 }

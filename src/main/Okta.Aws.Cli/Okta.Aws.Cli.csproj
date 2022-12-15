@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.IdentityManagement" Version="3.7.2.172" />
     <PackageReference Include="AWSSDK.SecurityToken" Version="3.7.1.112" />
     <PackageReference Include="Figgle" Version="0.4.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
@@ -16,7 +17,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
     <PackageReference Include="Okta.Auth.Sdk" Version="2.0.4" />
-    <PackageReference Include="Sharprompt" Version="2.4.0" />
+    <PackageReference Include="Sharprompt" Version="2.4.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Aws\ArnMappings\" />
     <Folder Include="GitHub\Abstractions\" />
   </ItemGroup>
 

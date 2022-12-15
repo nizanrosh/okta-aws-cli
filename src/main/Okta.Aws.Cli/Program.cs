@@ -1,13 +1,18 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Okta.Aws.Cli;
+using Okta.Aws.Cli.Aws.ArnMappings;
 using Okta.Aws.Cli.Extensions;
 using Okta.Aws.Cli.GitHub;
 using Okta.Aws.Cli.Okta;
 using Okta.Aws.Cli.Okta.Abstractions;
 
 await Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration(builder => builder.ConfigureUserSettings())
+    .ConfigureAppConfiguration(builder =>
+    {
+        builder.ConfigureUserSettings();
+        builder.ConfigureArnMappings();
+    })
     .ConfigureLogging(builder => builder.ConfigureOktaAwsCliLogging())
     .ConfigureServices(services =>
     {
@@ -17,6 +22,7 @@ await Host.CreateDefaultBuilder(args)
         services.AddCliArgumentHandling();
 
         services.AddSingleton<IUserSettingsHandler, UserSettingsHandler>();
+        services.AddSingleton<IArnMappingsService, ArnMappingsService>();
         services.AddSingleton<IOktaAwsAssumeRoleService, OktaAwsAssumeRoleService>();
 
         services.AddSingleton<OktaHttpClientHandler>();

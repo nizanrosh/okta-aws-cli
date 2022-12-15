@@ -12,11 +12,15 @@ public class MainAppHostedService : IHostedService
         _argumentFactory = argumentFactory;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
         var args = Environment.GetCommandLineArgs();
 
-        await _argumentFactory.GetHandler(args.ElementAtOrDefault(1)).Handle(cancellationToken);
+        var handler = _argumentFactory.GetHandler(args.ElementAtOrDefault(1));
+
+        var task = Task.Run(async () => await handler.Handle(cancellationToken), cancellationToken);
+
+        return task;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

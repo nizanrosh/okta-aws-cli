@@ -23,37 +23,43 @@ public class VersionHostedService : IHostedService
         _fileVersionUpdater = fileVersionUpdater;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        try
+        var task = Task.Run(async () =>
         {
-            var versionInfo = _configuration.GetSection(nameof(VersionInfo)).Get<VersionInfo>();
-
-            if (!ShouldQueryForNewVersion(versionInfo)) return;
-
-            var response = await _githubClient.GetRepoTags(cancellationToken);
-            if (response.Tags == null || !response.Tags.Any())
+            try
             {
-                _logger.LogWarning("Response contained no tags.");
-                return;
-            }
+                var versionInfo = _configuration.GetSection(nameof(VersionInfo)).Get<VersionInfo>();
 
-            var latestTag = response.Tags.MaxBy(t => t.Name);
-            if (latestTag?.Name == null)
+                if (!ShouldQueryForNewVersion(versionInfo)) return;
+
+                var response = await _githubClient.GetRepoTags(cancellationToken);
+                if (response.Tags == null || !response.Tags.Any())
+                {
+                    _logger.LogWarning("Response contained no tags.");
+                    return;
+                }
+
+                var latestTag = response.Tags.MaxBy(t => t.Name);
+                if (latestTag?.Name == null)
+                {
+                    _logger.LogWarning("Could not find latest tag using MaxBy.");
+                    return;
+                }
+
+                if (string.Equals(latestTag.Name, versionInfo?.CurrentVersion,
+                        StringComparison.InvariantCultureIgnoreCase)) return;
+
+                var newVersionInfo = CreateNewVersionInfo(latestTag.Name);
+                await _fileVersionUpdater.UpdateVersionInfoAsync(newVersionInfo, cancellationToken);
+            }
+            catch (Exception e)
             {
-                _logger.LogWarning("Could not find latest tag using MaxBy.");
-                return;
+                _logger.LogError(e, "An error has occurred while handling version info.");
             }
+        }, cancellationToken);
 
-            if (string.Equals(latestTag.Name, versionInfo?.LatestVersion, StringComparison.InvariantCultureIgnoreCase)) return;
-
-            var newVersionInfo = CreateNewVersionInfo(latestTag.Name);
-            await _fileVersionUpdater.UpdateVersionInfo(newVersionInfo, cancellationToken);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "An error has occurred while handling version info.");
-        }
+        return task;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
@@ -64,6 +70,13 @@ public class VersionHostedService : IHostedService
     private bool ShouldQueryForNewVersion(VersionInfo? versionInfo)
     {
         if (versionInfo == null) return true;
+
+        if (!string.Equals($"v{GetAssemblyVersion()}", versionInfo.CurrentVersion))
+        {
+            var newVersionInfo = CreateNewVersionInfo($"v{GetAssemblyVersion()}");
+            _fileVersionUpdater.UpdateVersionInfo(newVersionInfo);
+            return false;
+        }
 
         if (versionInfo.LastChecked < DateTime.UtcNow - TimeSpan.FromDays(1)) return true;
 
@@ -85,5 +98,12 @@ public class VersionHostedService : IHostedService
             LatestVersion = latestTag,
             LastChecked = DateTime.UtcNow
         };
+    }
+
+    private string GetAssemblyVersion()
+    {
+        var assemblyVersion = Assembly.GetEntryAssembly()?.GetName().Version;
+
+        return $"{assemblyVersion!.Major}.{assemblyVersion!.Minor}.{assemblyVersion!.Build}";
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Amazon;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Okta.Aws.Cli.Abstractions;
@@ -33,7 +34,14 @@ public class UserSettingsHandler : IUserSettingsHandler
     {
         var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>() ?? new UserSettings();
 
-        userSettings.OktaDomain = Prompt.Input<string>("Enter your Okta domain", userSettings.OktaDomain);
+        var url = Prompt.Input<string>("Enter your Okta domain", userSettings.OktaDomain);
+        while (!Uri.TryCreate(url, UriKind.Absolute, out _))
+        {
+            url = Prompt.Input<string>("The input is not a valid url, please enter a valid url", userSettings.OktaDomain);
+        }
+
+        userSettings.OktaDomain = url;
+
         userSettings.Username = Prompt.Input<string>("Enter your Okta username", userSettings.Username);
         userSettings.Password = Prompt.Password("Enter your Okta password");
 
@@ -53,8 +61,15 @@ public class UserSettingsHandler : IUserSettingsHandler
         //    configure.DefaultValues = userSettings.ProfileNames;
         //    configure.Maximum = 10;
         //});
-        userSettings.Region = Prompt.Input<string>("Enter your AWS region", userSettings.Region);
+        var region = Prompt.Input<string>("Enter your AWS region", userSettings.Region);
+        var regionResult = RegionEndpoint.GetBySystemName(region);
+        while (regionResult.DisplayName == "Unknown")
+        {
+            region = Prompt.Input<string>("The input is not a valid aws region, please enter a valid region", userSettings.Region);
+            regionResult = RegionEndpoint.GetBySystemName(region);
+        }
 
+        userSettings.Region = region;
         return userSettings;
     }
 
