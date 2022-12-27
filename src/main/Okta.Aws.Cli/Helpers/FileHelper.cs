@@ -58,4 +58,7 @@ public static class FileHelper
 
     public static string GetArnMappingsFile(IConfiguration configuration) =>
         $"{GetUserSettingsFolder(configuration)}/arnmappings.json";
+    
+    public static string GetProfilesFile(IConfiguration configuration) => 
+        $"{GetUserSettingsFolder(configuration)}/profiles.json";
 }

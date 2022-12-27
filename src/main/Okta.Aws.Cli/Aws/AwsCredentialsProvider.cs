@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System.Diagnostics.Tracing;
+using System.Xml.Serialization;
 using Amazon;
 using Amazon.IdentityManagement;
 using Amazon.Runtime;
@@ -10,6 +11,7 @@ using Okta.Aws.Cli.Abstractions;
 using Okta.Aws.Cli.Aws.Abstractions;
 using Okta.Aws.Cli.Aws.ArnMappings;
 using Okta.Aws.Cli.Aws.Constants;
+using Okta.Aws.Cli.Aws.Profiles;
 using Okta.Aws.Cli.Constants;
 using Sharprompt;
 
@@ -20,12 +22,15 @@ namespace Okta.Aws.Cli.Aws
         private readonly ILogger<AwsCredentialsProvider> _logger;
         private readonly IConfiguration _configuration;
         private readonly IArnMappingsService _arnMappingsService;
+        private readonly IProfilesService _profilesService;
 
-        public AwsCredentialsProvider(ILogger<AwsCredentialsProvider> logger, IConfiguration configuration, IArnMappingsService arnMappingsService)
+        public AwsCredentialsProvider(ILogger<AwsCredentialsProvider> logger, IConfiguration configuration,
+            IArnMappingsService arnMappingsService, IProfilesService profilesService)
         {
             _logger = logger;
             _configuration = configuration;
             _arnMappingsService = arnMappingsService;
+            _profilesService = profilesService;
         }
 
         public async Task<AwsCredentials> AssumeRole(string saml, CancellationToken cancellationToken)
@@ -38,14 +43,15 @@ namespace Okta.Aws.Cli.Aws
             var sessionDuration = GetDuration(assertionXml);
             var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
 
-            await MapArnsToAliases(assertionAttributeValues, saml, sessionDuration, cancellationToken);
+            var awsCredentialsMap =
+                await GetSessionAwsCredentials(assertionAttributeValues, saml, sessionDuration, cancellationToken);
+            await MapArnsToAliases(awsCredentialsMap, cancellationToken);
+            await SaveProfiles(awsCredentialsMap, cancellationToken);
 
             var (principalArn, roleArn) = GetArnsToAssume(assertionAttributeValues);
 
-            var credentials =
-                await GetInternalAwsCredentials(saml, principalArn, roleArn, sessionDuration, cancellationToken);
-
-            return credentials;
+            var awsCredentials = awsCredentialsMap[$"{principalArn},{roleArn}"];
+            return awsCredentials;
         }
 
         private Stream GetSamlStream(string saml)
@@ -92,35 +98,34 @@ namespace Okta.Aws.Cli.Aws
             return SplitArns(attributeValues.First());
         }
 
-        private async Task MapArnsToAliases(List<string> attributeValues, string saml, int duration, CancellationToken cancellationToken)
+        private async Task MapArnsToAliases(Dictionary<string, AwsCredentials> sessionCredentials,
+            CancellationToken cancellationToken)
         {
             var shouldUpdateMappingsFile = false;
 
             var arnMappings = _arnMappingsService.GetArnMappings();
 
-            foreach (var attributeValue in attributeValues)
+            foreach (var (attributeValue, awsCredentials) in sessionCredentials)
             {
                 try
                 {
-                    if (!arnMappings.TryGetValue(attributeValue, out _))
-                    {
-                        shouldUpdateMappingsFile = true;
+                    if (arnMappings.TryGetValue(attributeValue, out _)) continue;
+                    shouldUpdateMappingsFile = true;
 
-                        var (principalArn, roleArn) = SplitArns(attributeValue);
+                    var (principalArn, roleArn) = SplitArns(attributeValue);
+                    var region = _configuration[User.Settings.Region];
 
-                        var internalCredentials =
-                            await GetInternalAwsCredentials(saml, principalArn, roleArn, duration, cancellationToken);
+                    var awsSessionCredentials = new SessionAWSCredentials(awsCredentials.AccessKeyId,
+                        awsCredentials.SessionToken, awsCredentials.SessionToken);
 
-                        var awsCredentials = new SessionAWSCredentials(internalCredentials.AccessKeyId, internalCredentials.SecretAccessKey,
-                            internalCredentials.SessionToken);
+                    var awsIdentityClient =
+                        new AmazonIdentityManagementServiceClient(awsSessionCredentials,
+                            RegionEndpoint.GetBySystemName(region));
 
-                        var awsIdentityClient = new AmazonIdentityManagementServiceClient(awsCredentials, RegionEndpoint.EUWest1);
+                    var aliases = await awsIdentityClient.ListAccountAliasesAsync(cancellationToken);
+                    var customAlias = $"{string.Join('-', aliases.AccountAliases)}-{roleArn.Split('/').Last()}";
 
-                        var aliases = await awsIdentityClient.ListAccountAliasesAsync(cancellationToken);
-                        var customAlias = $"{string.Join('-', aliases.AccountAliases)}-{roleArn.Split('/').Last()}";
-
-                        arnMappings[attributeValue] = customAlias;
-                    }
+                    arnMappings[attributeValue] = customAlias;
                 }
                 catch (Exception e)
                 {
@@ -132,6 +137,37 @@ namespace Okta.Aws.Cli.Aws
             {
                 await _arnMappingsService.UpdateArnMappingsFile(cancellationToken);
             }
+        }
+
+        private async Task<Dictionary<string, AwsCredentials>> GetSessionAwsCredentials(
+            List<string> attributeValues,
+            string saml, int duration, CancellationToken cancellationToken)
+        {
+            var credentials = new Dictionary<string, AwsCredentials>();
+
+            foreach (var attributeValue in attributeValues)
+            {
+                try
+                {
+                    var (principalArn, roleArn) = SplitArns(attributeValue);
+
+                    var internalCredentials =
+                        await GetInternalAwsCredentials(saml, principalArn, roleArn, duration, cancellationToken);
+
+                    var region = _configuration[User.Settings.Region];
+                    var awsCredentials = new AwsCredentials(internalCredentials.AccessKeyId,
+                        internalCredentials.SecretAccessKey,
+                        internalCredentials.SessionToken, region);
+
+                    credentials[attributeValue] = awsCredentials;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, $"An error has occurred while getting credentials for {attributeValue}");
+                }
+            }
+
+            return credentials;
         }
 
         private (string, string) SplitArns(string attributeValue)
@@ -163,15 +199,16 @@ namespace Okta.Aws.Cli.Aws
 
         private List<string> GetAssertionAttributeValues(AssertionModel.Response assertionResponse)
         {
-            var attributeValues = assertionResponse?.Assertion?.AttributeStatement?.Attribute?.FirstOrDefault(a => a.Name == Role.Name)?.AttributeValue;
+            var attributeValues = assertionResponse?.Assertion?.AttributeStatement?.Attribute
+                ?.FirstOrDefault(a => a.Name == Role.Name)?.AttributeValue;
             ArgumentNullException.ThrowIfNull(attributeValues, nameof(attributeValues));
 
             return attributeValues;
         }
 
-        private async Task<AwsCredentials> GetInternalAwsCredentials(string saml, string principalArn, string roleArn, int sessionDuration, CancellationToken cancellationToken)
+        private async Task<AwsCredentials> GetInternalAwsCredentials(string saml, string principalArn, string roleArn,
+            int sessionDuration, CancellationToken cancellationToken)
         {
-
             var assumeRoleRequest = new AssumeRoleWithSAMLRequest
             {
                 DurationSeconds = sessionDuration,
@@ -182,12 +219,32 @@ namespace Okta.Aws.Cli.Aws
 
             var region = _configuration[User.Settings.Region];
             var dummyCredentials = new BasicAWSCredentials("Jack", "Sparrow");
-            var stsClient = new AmazonSecurityTokenServiceClient(dummyCredentials, RegionEndpoint.GetBySystemName(region));
+            var stsClient =
+                new AmazonSecurityTokenServiceClient(dummyCredentials, RegionEndpoint.GetBySystemName(region));
             var assumeRoleResponse = await stsClient.AssumeRoleWithSAMLAsync(assumeRoleRequest, cancellationToken);
 
-            var credentials = new AwsCredentials(assumeRoleResponse.Credentials.AccessKeyId, assumeRoleResponse.Credentials.SecretAccessKey, assumeRoleResponse.Credentials.SessionToken, region);
+            var credentials = new AwsCredentials(assumeRoleResponse.Credentials.AccessKeyId,
+                assumeRoleResponse.Credentials.SecretAccessKey, assumeRoleResponse.Credentials.SessionToken, region);
 
             return credentials;
+        }
+
+        private async Task SaveProfiles(Dictionary<string, AwsCredentials> credentials, CancellationToken cancellationToken)
+        {
+            var profiles = credentials.Select(x =>
+            {
+                var (key, value) = x;
+                return new OktaAwsCliProfile
+                {
+                    Key = key,
+                    Region = value.Region,
+                    AccessKeyId = value.AccessKeyId,
+                    SecretAccessKey = value.SecretAccessKey,
+                    Token = value.SessionToken
+                };
+            });
+
+            await _profilesService.UpdateProfilesFile(profiles, cancellationToken);
         }
     }
 }

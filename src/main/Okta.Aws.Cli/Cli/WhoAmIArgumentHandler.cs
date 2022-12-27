@@ -10,7 +10,7 @@ public class WhoAmIArgumentHandler : CliArgumentHandlerBase
 
     private readonly IUserSettingsHandler _userSettingsHandler;
 
-    public WhoAmIArgumentHandler(IHostApplicationLifetime lifetime, IConfiguration configuration, IUserSettingsHandler userSettingsHandler) : base(lifetime, configuration)
+    public WhoAmIArgumentHandler(IConfiguration configuration, IUserSettingsHandler userSettingsHandler) : base(configuration)
     {
         _userSettingsHandler = userSettingsHandler;
     }

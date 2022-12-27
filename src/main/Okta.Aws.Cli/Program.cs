@@ -1,35 +1,54 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Okta.Aws.Cli;
 using Okta.Aws.Cli.Aws.ArnMappings;
+using Okta.Aws.Cli.Aws.Profiles;
+using Okta.Aws.Cli.Cli.Interfaces;
 using Okta.Aws.Cli.Extensions;
 using Okta.Aws.Cli.GitHub;
 using Okta.Aws.Cli.Okta;
 using Okta.Aws.Cli.Okta.Abstractions;
 
-await Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration(builder =>
-    {
-        builder.ConfigureUserSettings();
-        builder.ConfigureArnMappings();
-    })
-    .ConfigureLogging(builder => builder.ConfigureOktaAwsCliLogging())
-    .ConfigureServices(services =>
-    {
-        services.AddOktaSamlProvider();
-        services.AddAwsCredentialsProvider();
-        services.AddFileSystemUpdaters();
-        services.AddCliArgumentHandling();
+var cts = new CancellationTokenSource();
+Console.CancelKeyPress += (s, e) =>
+{
+    cts.Cancel();
+    e.Cancel = true;
+};
 
-        services.AddSingleton<IUserSettingsHandler, UserSettingsHandler>();
-        services.AddSingleton<IArnMappingsService, ArnMappingsService>();
-        services.AddSingleton<IOktaAwsAssumeRoleService, OktaAwsAssumeRoleService>();
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", false)
+    .ConfigureArnMappings()
+    .ConfigureUserSettings()
+    .ConfigureProfiles()
+    .Build();
 
-        services.AddSingleton<OktaHttpClientHandler>();
-        services.AddHttpClient<IOktaApiClient, OktaApiClient>().ConfigurePrimaryHttpMessageHandler<OktaHttpClientHandler>();
-        services.AddHttpClient<IGitHubApiClient, GitHubApiClient>();
+var services = new ServiceCollection();
 
-        services.AddHostedService<VersionHostedService>();
-        services.AddHostedService<MainAppHostedService>();
-    })
-    .RunConsoleAsync();
+services.AddLogging(builder => builder.ConfigureOktaAwsCliLogging());
+services.AddSingleton<IConfiguration>(configuration);
+
+services.AddOktaSamlProvider();
+services.AddAwsCredentialsProvider();
+services.AddFileSystemUpdaters();
+services.AddCliArgumentHandling();
+
+services.AddSingleton<IUserSettingsHandler, UserSettingsHandler>();
+services.AddSingleton<IArnMappingsService, ArnMappingsService>();
+services.AddSingleton<IProfilesService, ProfilesService>();
+services.AddSingleton<IOktaAwsAssumeRoleService, OktaAwsAssumeRoleService>();
+
+services.AddSingleton<OktaHttpClientHandler>();
+services.AddHttpClient<IOktaApiClient, OktaApiClient>().ConfigurePrimaryHttpMessageHandler<OktaHttpClientHandler>();
+services.AddHttpClient<IGitHubApiClient, GitHubApiClient>();
+
+services.AddSingleton<IVersionService, VersionService>();
+
+var provider = services.BuildServiceProvider();
+
+var argumentFactory = provider.GetRequiredService<ICliArgumentFactory>();
+await argumentFactory.GetHandler(args.ElementAtOrDefault(0)).Handle(cts.Token);
+
+var versionService = provider.GetRequiredService<IVersionService>();
+await versionService.ExecuteAsync(cts.Token);

@@ -47,10 +47,18 @@ namespace Okta.Aws.Cli.Extensions
             return services;
         }
 
+        public static IServiceCollection AddProfilesUpdater(this IServiceCollection services)
+        {
+            services.AddSingleton<IProfilesUpdater, ProfilesUpdater>();
+
+            return services;
+        }
+
         public static IServiceCollection AddFileSystemUpdaters(this IServiceCollection services)
         {
             services.AddFileCredentialsUpdater();
             services.AddFileVersionUpdater();
+            services.AddProfilesUpdater();
 
             return services;
         }
@@ -64,6 +72,7 @@ namespace Okta.Aws.Cli.Extensions
             services.AddSingleton<ICliArgumentHandler, VersionArgumentHandler>();
             services.AddSingleton<ICliArgumentHandler, WhoAmIArgumentHandler>();
             services.AddSingleton<ICliArgumentHandler, UpdateArgumentHandler>();
+            services.AddSingleton<ICliArgumentHandler, SelectArgumentHandler>();
 
             services.AddSingleton<IInvalidArgumentHandler, InvalidArgumentHandler>();
 

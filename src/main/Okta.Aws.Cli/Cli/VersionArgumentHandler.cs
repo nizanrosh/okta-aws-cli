@@ -8,7 +8,7 @@ public class VersionArgumentHandler : CliArgumentHandlerBase
 {
     public override string Argument => "--version";
 
-    public VersionArgumentHandler(IHostApplicationLifetime lifetime, IConfiguration configuration) : base(lifetime, configuration)
+    public VersionArgumentHandler(IConfiguration configuration) : base(configuration)
     {
     }
 

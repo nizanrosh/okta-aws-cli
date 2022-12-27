@@ -11,7 +11,7 @@ public class RunArgumentHandler : CliArgumentHandlerBase
     private readonly IOktaAwsAssumeRoleService _assumeRoleService;
     private readonly IUserSettingsHandler _userSettingsHandler;
 
-    public RunArgumentHandler(IOktaAwsAssumeRoleService assumeRoleService, IUserSettingsHandler userSettingsHandler, IHostApplicationLifetime lifetime, IConfiguration configuration) : base(lifetime, configuration)
+    public RunArgumentHandler(IOktaAwsAssumeRoleService assumeRoleService, IUserSettingsHandler userSettingsHandler, IConfiguration configuration) : base(configuration)
     {
         _assumeRoleService = assumeRoleService;
         _userSettingsHandler = userSettingsHandler;

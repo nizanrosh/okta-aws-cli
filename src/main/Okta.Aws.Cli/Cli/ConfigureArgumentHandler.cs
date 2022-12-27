@@ -9,7 +9,7 @@ public class ConfigureArgumentHandler : CliArgumentHandlerBase
 
     private readonly IUserSettingsHandler _userSettingsHandler;
 
-    public ConfigureArgumentHandler(IUserSettingsHandler userSettingsHandler, IHostApplicationLifetime lifetime, IConfiguration configuration) : base(lifetime, configuration)
+    public ConfigureArgumentHandler(IUserSettingsHandler userSettingsHandler, IConfiguration configuration) : base(configuration)
     {
         _userSettingsHandler = userSettingsHandler;
     }

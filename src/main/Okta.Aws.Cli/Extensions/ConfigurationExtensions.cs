@@ -25,5 +25,14 @@ namespace Okta.Aws.Cli.Extensions
 
             return configBuilder;
         }
+
+        public static IConfigurationBuilder ConfigureProfiles(this IConfigurationBuilder configBuilder)
+        {
+            var config = configBuilder.Build();
+            var profilesPath = FileHelper.GetProfilesFile(config);
+            configBuilder.AddJsonFile(profilesPath, true);
+
+            return configBuilder;
+        }
     }
 }

@@ -8,14 +8,19 @@ using Okta.Aws.Cli.GitHub;
 
 namespace Okta.Aws.Cli;
 
-public class VersionHostedService : IHostedService
+public interface IVersionService
 {
-    private readonly ILogger<VersionHostedService> _logger;
+    Task ExecuteAsync(CancellationToken cancellationToken);
+}
+
+public class VersionService : IVersionService
+{
+    private readonly ILogger<VersionService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IGitHubApiClient _githubClient;
     private readonly IFileVersionUpdater _fileVersionUpdater;
 
-    public VersionHostedService(ILogger<VersionHostedService> logger, IConfiguration configuration, IGitHubApiClient githubClient, IFileVersionUpdater fileVersionUpdater)
+    public VersionService(ILogger<VersionService> logger, IConfiguration configuration, IGitHubApiClient githubClient, IFileVersionUpdater fileVersionUpdater)
     {
         _logger = logger;
         _configuration = configuration;
@@ -23,7 +28,7 @@ public class VersionHostedService : IHostedService
         _fileVersionUpdater = fileVersionUpdater;
     }
 
-    public Task StartAsync(CancellationToken cancellationToken)
+    public Task ExecuteAsync(CancellationToken cancellationToken)
     {
         var task = Task.Run(async () =>
         {
@@ -60,11 +65,6 @@ public class VersionHostedService : IHostedService
         }, cancellationToken);
 
         return task;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
     }
 
     private bool ShouldQueryForNewVersion(VersionInfo? versionInfo)

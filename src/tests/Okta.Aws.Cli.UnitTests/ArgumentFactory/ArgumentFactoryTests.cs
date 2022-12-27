@@ -13,7 +13,8 @@ namespace Okta.Aws.Cli.UnitTests.ArgumentFactory
         [Fact]
         public void CliArgumentFactory_Check_InvalidArgumentHandler()
         {
-            var invalidArgumentHandlerMock = new Mock<InvalidArgumentHandler>(() => new InvalidArgumentHandler(It.IsAny<IEnumerable<ICliArgumentHandler>>(), It.IsAny<IHostApplicationLifetime>(), It.IsAny<IConfiguration>()));
+            var invalidArgumentHandlerMock = new Mock<InvalidArgumentHandler>(() =>
+                new InvalidArgumentHandler(It.IsAny<IEnumerable<ICliArgumentHandler>>(), It.IsAny<IConfiguration>()));
 
             var argumentFactory = new CliArgumentFactory(new List<ICliArgumentHandler>(),
                 invalidArgumentHandlerMock.Object);

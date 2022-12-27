@@ -10,12 +10,10 @@ public abstract class CliArgumentHandlerBase : ICliArgumentHandler
 {
     public abstract string Argument { get; }
 
-    protected readonly IHostApplicationLifetime Lifetime;
     protected readonly IConfiguration Configuration;
 
-    protected CliArgumentHandlerBase(IHostApplicationLifetime lifetime, IConfiguration configuration)
+    protected CliArgumentHandlerBase(IConfiguration configuration)
     {
-        Lifetime = lifetime;
         Configuration = configuration;
     }
 
@@ -23,7 +21,6 @@ public abstract class CliArgumentHandlerBase : ICliArgumentHandler
     {
         await HandleInternal(cancellationToken);
         CheckForUpdates();
-        Lifetime.StopApplication();
     }
 
     public abstract Task HandleInternal(CancellationToken cancellationToken);

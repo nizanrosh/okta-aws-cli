@@ -15,7 +15,7 @@ public class UpdateArgumentHandler : CliArgumentHandlerBase
     private readonly ILogger<UpdateArgumentHandler> _logger;
     private readonly IGitHubApiClient _gitHubApiClient;
 
-    public UpdateArgumentHandler(ILogger<UpdateArgumentHandler> logger, IHostApplicationLifetime lifetime, IConfiguration configuration, IGitHubApiClient gitHubApiClient) : base(lifetime, configuration)
+    public UpdateArgumentHandler(ILogger<UpdateArgumentHandler> logger, IConfiguration configuration, IGitHubApiClient gitHubApiClient) : base(configuration)
     {
         _logger = logger;
         _gitHubApiClient = gitHubApiClient;
