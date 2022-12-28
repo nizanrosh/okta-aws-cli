@@ -10,12 +10,12 @@ public class WhoAmIArgumentHandler : CliArgumentHandlerBase
 
     private readonly IUserSettingsHandler _userSettingsHandler;
 
-    public WhoAmIArgumentHandler(IHostApplicationLifetime lifetime, IConfiguration configuration, IUserSettingsHandler userSettingsHandler) : base(lifetime, configuration)
+    public WhoAmIArgumentHandler(IConfiguration configuration, IUserSettingsHandler userSettingsHandler) : base(configuration)
     {
         _userSettingsHandler = userSettingsHandler;
     }
 
-    public override Task HandleInternal(CancellationToken cancellationToken)
+    protected override Task HandleInternal(string[] args, CancellationToken cancellationToken)
     {
         var userSettings = Configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 

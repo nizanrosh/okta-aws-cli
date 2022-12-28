@@ -4,6 +4,6 @@ namespace Okta.Aws.Cli.FileSystem
 {
     public interface ICredentialsUpdater
     {
-        Task UpdateCredentials(AwsCredentials credentials, CancellationToken cancellationToken);
+        Task UpdateCredentials(string profileName, AwsCredentials credentials, CancellationToken cancellationToken);
     }
 }

@@ -14,24 +14,46 @@ public class FileVersionUpdater : IFileVersionUpdater
         _configuration = configuration;
     }
 
-    public Task UpdateVersionInfo(VersionInfo versionInfo, CancellationToken cancellationToken)
+    public Task UpdateVersionInfoAsync(VersionInfo versionInfo, CancellationToken cancellationToken)
     {
         var versionCacheFolder = FileHelper.GetUserSettingsFolder(_configuration);
 
         if (!Directory.Exists(versionCacheFolder))
         {
             Directory.CreateDirectory(versionCacheFolder);
-            return UpdateVersionInfoInternal(versionInfo, cancellationToken);
+            return UpdateVersionInfoInternalAsync(versionInfo, cancellationToken);
         }
 
-        return UpdateVersionInfoInternal(versionInfo, cancellationToken);
+        return UpdateVersionInfoInternalAsync(versionInfo, cancellationToken);
     }
 
-    private Task UpdateVersionInfoInternal(VersionInfo versionInfo, CancellationToken cancellationToken)
+    public void UpdateVersionInfo(VersionInfo versionInfo)
+    {
+        var versionCacheFolder = FileHelper.GetUserSettingsFolder(_configuration);
+
+        if (!Directory.Exists(versionCacheFolder))
+        {
+            Directory.CreateDirectory(versionCacheFolder);
+            UpdateVersionInfoInternal(versionInfo);
+            return;
+        }
+
+        UpdateVersionInfoInternal(versionInfo);
+    }
+
+    private Task UpdateVersionInfoInternalAsync(VersionInfo versionInfo, CancellationToken cancellationToken)
     {
         var wrapper = new VersionInfoWrapper(versionInfo);
 
         var payload = JsonConvert.SerializeObject(wrapper);
         return File.WriteAllTextAsync(FileHelper.GetVersionInfoFile(_configuration), payload, cancellationToken);
+    }
+
+    private void UpdateVersionInfoInternal(VersionInfo versionInfo)
+    {
+        var wrapper = new VersionInfoWrapper(versionInfo);
+
+        var payload = JsonConvert.SerializeObject(wrapper);
+        File.WriteAllText(FileHelper.GetVersionInfoFile(_configuration), payload);
     }
 }

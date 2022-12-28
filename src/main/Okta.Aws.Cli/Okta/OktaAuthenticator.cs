@@ -5,7 +5,9 @@ using Newtonsoft.Json;
 using Okta.Auth.Sdk;
 using Okta.Aws.Cli.Abstractions;
 using Okta.Aws.Cli.Constants;
+using Okta.Aws.Cli.Encryption;
 using Okta.Aws.Cli.Okta.Abstractions;
+using Okta.Sdk.Abstractions;
 using Okta.Sdk.Abstractions.Configuration;
 
 namespace Okta.Aws.Cli.Okta
@@ -58,15 +60,22 @@ namespace Okta.Aws.Cli.Okta
                 var authenticationResponse = await client.AuthenticateAsync(new AuthenticateOptions
                 {
                     Username = settings.Username,
-                    Password = settings.Password
+                    Password = AesOperation.DecryptString(settings.Password!)
                 }, cancellationToken);
 
                 spinner.Succeed();
 
                 return authenticationResponse;
             }
-            catch (Exception)
+            catch (OktaApiException oktaApiException)
             {
+                _logger.LogError(oktaApiException, "An okta api exception has occurred.");
+                spinner.Fail("Authentication failed, are you sure your password is correct?");
+                throw;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "");
                 spinner.Fail();
                 throw;
             }

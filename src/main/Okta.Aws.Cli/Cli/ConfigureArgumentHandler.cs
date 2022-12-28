@@ -9,12 +9,12 @@ public class ConfigureArgumentHandler : CliArgumentHandlerBase
 
     private readonly IUserSettingsHandler _userSettingsHandler;
 
-    public ConfigureArgumentHandler(IUserSettingsHandler userSettingsHandler, IHostApplicationLifetime lifetime, IConfiguration configuration) : base(lifetime, configuration)
+    public ConfigureArgumentHandler(IUserSettingsHandler userSettingsHandler, IConfiguration configuration) : base(configuration)
     {
         _userSettingsHandler = userSettingsHandler;
     }
 
-    public override Task HandleInternal(CancellationToken cancellationToken)
+    protected override Task HandleInternal(string[] args, CancellationToken cancellationToken)
     {
         return _userSettingsHandler.ConfigureUserSettingsFile(cancellationToken);
     }

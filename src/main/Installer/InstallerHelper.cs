@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 
 namespace Installer;
 
@@ -42,5 +43,27 @@ public static class InstallerHelper
         });
 
         return oacliExecutable!.WaitForExitAsync();
+    }
+
+    public static string GetAppPath(IConfiguration configuration)
+    {
+        var path = configuration["path"];
+        if (!string.IsNullOrEmpty(path)) return path;
+
+        var installerPath = Directory.GetCurrentDirectory();
+        var rootFolder = Directory.GetParent(installerPath)?.FullName;
+        ArgumentNullException.ThrowIfNull(rootFolder, nameof(rootFolder));
+
+        var appPath = Path.Combine(rootFolder, "app");
+
+        return appPath;
+    }
+
+    public static string GetOutputPath(IConfiguration configuration)
+    {
+        var path = configuration["output"];
+        if (!string.IsNullOrEmpty(path)) return path;
+
+        return "app";
     }
 }

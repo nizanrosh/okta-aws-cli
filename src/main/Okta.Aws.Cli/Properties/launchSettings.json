@@ -2,7 +2,7 @@
   "profiles": {
     "Okta.Aws.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "whoami",
+      "commandLineArgs": "run",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }

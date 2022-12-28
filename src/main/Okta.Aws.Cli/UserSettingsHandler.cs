@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Text;
+using Amazon;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Okta.Aws.Cli.Abstractions;
 using Okta.Aws.Cli.Constants;
+using Okta.Aws.Cli.Encryption;
 using Okta.Aws.Cli.Helpers;
 using Okta.Aws.Cli.Okta.Abstractions;
 using Sharprompt;
@@ -33,9 +36,16 @@ public class UserSettingsHandler : IUserSettingsHandler
     {
         var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>() ?? new UserSettings();
 
-        userSettings.OktaDomain = Prompt.Input<string>("Enter your Okta domain", userSettings.OktaDomain);
+        var url = Prompt.Input<string>("Enter your Okta domain", userSettings.OktaDomain);
+        while (!Uri.TryCreate(url, UriKind.Absolute, out _))
+        {
+            url = Prompt.Input<string>("The input is not a valid url, please enter a valid url", userSettings.OktaDomain);
+        }
+
+        userSettings.OktaDomain = url;
+
         userSettings.Username = Prompt.Input<string>("Enter your Okta username", userSettings.Username);
-        userSettings.Password = Prompt.Password("Enter your Okta password");
+        userSettings.Password = AesOperation.EncryptString(Prompt.Password("Enter your Okta password"));
 
         if (Enum.TryParse(typeof(MfaTypes), userSettings.MfaType, false, out var mfaType))
         {
@@ -53,8 +63,15 @@ public class UserSettingsHandler : IUserSettingsHandler
         //    configure.DefaultValues = userSettings.ProfileNames;
         //    configure.Maximum = 10;
         //});
-        userSettings.Region = Prompt.Input<string>("Enter your AWS region", userSettings.Region);
+        var region = Prompt.Input<string>("Enter your AWS region", userSettings.Region);
+        var regionResult = RegionEndpoint.GetBySystemName(region);
+        while (regionResult.DisplayName == "Unknown")
+        {
+            region = Prompt.Input<string>("The input is not a valid aws region, please enter a valid region", userSettings.Region);
+            regionResult = RegionEndpoint.GetBySystemName(region);
+        }
 
+        userSettings.Region = region;
         return userSettings;
     }
 
@@ -85,6 +102,13 @@ public class UserSettingsHandler : IUserSettingsHandler
         {
             PromptForParameter("Enter your Okta password", User.Settings.Password, true);
         }
+        else if(!IsBase64String(userSettings.Password))
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Your password is not encrypted, run oacli configure to encrypt.");
+            Console.ForegroundColor = ConsoleColor.White;
+            _configuration[User.Settings.Password] = AesOperation.EncryptString(userSettings.Password);
+        }
 
         if (string.IsNullOrEmpty(userSettings?.MfaType))
         {
@@ -108,7 +132,7 @@ public class UserSettingsHandler : IUserSettingsHandler
 
         if (isPassword)
         {
-            param = Prompt.Password(message);
+            param = AesOperation.EncryptString(Prompt.Password(message));
         }
         else
         {
@@ -121,5 +145,11 @@ public class UserSettingsHandler : IUserSettingsHandler
     {
         var param = Prompt.Select<T>(message)!.ToString();
         _configuration[configPath] = param;
+    }
+    
+    public bool IsBase64String(string base64)
+    {
+        var buffer = new Span<byte>(new byte[base64.Length]);
+        return Convert.TryFromBase64String(base64, buffer , out _);
     }
 }

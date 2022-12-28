@@ -8,11 +8,11 @@ public class VersionArgumentHandler : CliArgumentHandlerBase
 {
     public override string Argument => "--version";
 
-    public VersionArgumentHandler(IHostApplicationLifetime lifetime, IConfiguration configuration) : base(lifetime, configuration)
+    public VersionArgumentHandler(IConfiguration configuration) : base(configuration)
     {
     }
 
-    public override Task HandleInternal(CancellationToken cancellationToken)
+    protected override Task HandleInternal(string[] args, CancellationToken cancellationToken)
     {
         var version = GetAppVersion();
 
