@@ -1,4 +1,5 @@
-﻿using Amazon;
+﻿using System.Text;
+using Amazon;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
@@ -101,6 +102,13 @@ public class UserSettingsHandler : IUserSettingsHandler
         {
             PromptForParameter("Enter your Okta password", User.Settings.Password, true);
         }
+        else if(!IsBase64String(userSettings.Password))
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("Your password is not encrypted, run oacli configure to encrypt.");
+            Console.ForegroundColor = ConsoleColor.White;
+            _configuration[User.Settings.Password] = AesOperation.EncryptString(userSettings.Password);
+        }
 
         if (string.IsNullOrEmpty(userSettings?.MfaType))
         {
@@ -137,5 +145,11 @@ public class UserSettingsHandler : IUserSettingsHandler
     {
         var param = Prompt.Select<T>(message)!.ToString();
         _configuration[configPath] = param;
+    }
+    
+    public bool IsBase64String(string base64)
+    {
+        var buffer = new Span<byte>(new byte[base64.Length]);
+        return Convert.TryFromBase64String(base64, buffer , out _);
     }
 }

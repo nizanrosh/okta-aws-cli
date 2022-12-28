@@ -53,14 +53,15 @@ namespace Okta.Aws.Cli.Aws
 
                 var awsCredentialsMap =
                     await GetSessionAwsCredentials(assertionAttributeValues, saml, sessionDuration, cancellationToken);
+                
                 await MapArnsToAliases(awsCredentialsMap, cancellationToken);
                 await SaveProfiles(awsCredentialsMap, cancellationToken);
+
+                spinner.Succeed();
 
                 var (principalArn, roleArn) = GetArnsToAssume(assertionAttributeValues);
 
                 var awsCredentials = awsCredentialsMap[$"{principalArn},{roleArn}"];
-                
-                spinner.Succeed();
                 
                 return awsCredentials;
             }

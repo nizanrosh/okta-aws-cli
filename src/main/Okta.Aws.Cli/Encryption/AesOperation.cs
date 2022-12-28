@@ -67,7 +67,6 @@ public class AesOperation
 
     public static string GetKeyByMachine()
     {
-        
         var user = Environment.UserName;
         var processorCount = Environment.ProcessorCount;
         var machineName = Environment.MachineName;
