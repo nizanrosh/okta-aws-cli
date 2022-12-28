@@ -18,7 +18,7 @@ public class MainAppHostedService : IHostedService
 
         var handler = _argumentFactory.GetHandler(args.ElementAtOrDefault(1));
 
-        var task = Task.Run(async () => await handler.Handle(cancellationToken), cancellationToken);
+        var task = Task.Run(async () => await handler.Handle(args, cancellationToken), cancellationToken);
 
         return task;
     }

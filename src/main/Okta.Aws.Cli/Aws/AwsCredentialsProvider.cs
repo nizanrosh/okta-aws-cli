@@ -5,6 +5,7 @@ using Amazon.IdentityManagement;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
+using Kurukuru;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Okta.Aws.Cli.Abstractions;
@@ -36,22 +37,39 @@ namespace Okta.Aws.Cli.Aws
         public async Task<AwsCredentials> AssumeRole(string saml, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Assuming AWS role...");
+            var spinner = new Spinner("Assuming Roles...");
+            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
-            var assertionXml = GetAssertionXml(saml);
-            ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
+            try
+            {
+                spinner.Start();
 
-            var sessionDuration = GetDuration(assertionXml);
-            var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
 
-            var awsCredentialsMap =
-                await GetSessionAwsCredentials(assertionAttributeValues, saml, sessionDuration, cancellationToken);
-            await MapArnsToAliases(awsCredentialsMap, cancellationToken);
-            await SaveProfiles(awsCredentialsMap, cancellationToken);
+                var assertionXml = GetAssertionXml(saml);
+                ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
 
-            var (principalArn, roleArn) = GetArnsToAssume(assertionAttributeValues);
+                var sessionDuration = GetDuration(assertionXml);
+                var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
 
-            var awsCredentials = awsCredentialsMap[$"{principalArn},{roleArn}"];
-            return awsCredentials;
+                var awsCredentialsMap =
+                    await GetSessionAwsCredentials(assertionAttributeValues, saml, sessionDuration, cancellationToken);
+                await MapArnsToAliases(awsCredentialsMap, cancellationToken);
+                await SaveProfiles(awsCredentialsMap, cancellationToken);
+
+                var (principalArn, roleArn) = GetArnsToAssume(assertionAttributeValues);
+
+                var awsCredentials = awsCredentialsMap[$"{principalArn},{roleArn}"];
+                
+                spinner.Succeed();
+                
+                return awsCredentials;
+            }
+            catch (Exception e)
+            {
+                spinner.Fail();
+                _logger.LogError(e, "An error has occurred while assuming role.");
+                throw;
+            }
         }
 
         private Stream GetSamlStream(string saml)
@@ -116,7 +134,7 @@ namespace Okta.Aws.Cli.Aws
                     var region = _configuration[User.Settings.Region];
 
                     var awsSessionCredentials = new SessionAWSCredentials(awsCredentials.AccessKeyId,
-                        awsCredentials.SessionToken, awsCredentials.SessionToken);
+                        awsCredentials.SecretAccessKey, awsCredentials.SessionToken);
 
                     var awsIdentityClient =
                         new AmazonIdentityManagementServiceClient(awsSessionCredentials,

@@ -1,13 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Installer;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Xunit;
+using Assert = Xunit.Assert;
 
 namespace Okta.Aws.Cli.UnitTests.Installer;
 
+[TestClass]
 public class InstallerTests
 {
-    [Fact]
+    [TestMethod]
     public void InstallerHelper_Check_GetNewWindowsPaths()
     {
         var oldPath = "\\some\\path";
@@ -25,7 +28,7 @@ public class InstallerTests
         Assert.Equal(expectedPath, actualPath);
     }
 
-    [Fact]
+    [TestMethod]
     public void InstallerHelper_Check_ShouldUpdateWindowsPaths()
     {
         var oldPath = "\\some\\path;\\some\\new\\path";
@@ -42,7 +45,7 @@ public class InstallerTests
         Assert.True(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void InstallerHelper_Check_GetNewLinuxPaths()
     {
         var oldPaths = new[]
@@ -61,7 +64,7 @@ public class InstallerTests
         Assert.Equal(expectedResult, actualResult);
     }
 
-    [Fact]
+    [TestMethod]
     public void InstallerHelper_Check_ShouldUpdateLinuxPaths()
     {
         var oldPaths = new List<string>

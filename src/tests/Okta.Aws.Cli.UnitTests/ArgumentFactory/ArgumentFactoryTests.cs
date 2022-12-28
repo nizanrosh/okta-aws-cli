@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Okta.Aws.Cli.Cli;
 using Okta.Aws.Cli.Cli.Interfaces;
@@ -8,9 +10,10 @@ using Xunit;
 
 namespace Okta.Aws.Cli.UnitTests.ArgumentFactory
 {
+    [TestClass]
     public class ArgumentFactoryTests
     {
-        [Fact]
+        [TestMethod]
         public void CliArgumentFactory_Check_InvalidArgumentHandler()
         {
             var invalidArgumentHandlerMock = new Mock<InvalidArgumentHandler>(() =>
@@ -21,7 +24,7 @@ namespace Okta.Aws.Cli.UnitTests.ArgumentFactory
 
             var handler = argumentFactory.GetHandler("someNonExistentArgument");
 
-            Assert.Same(invalidArgumentHandlerMock.Object, handler);
+            invalidArgumentHandlerMock.Object.Should().BeSameAs(handler);
         }
     }
 }

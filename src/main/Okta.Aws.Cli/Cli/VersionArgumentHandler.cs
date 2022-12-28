@@ -12,7 +12,7 @@ public class VersionArgumentHandler : CliArgumentHandlerBase
     {
     }
 
-    public override Task HandleInternal(CancellationToken cancellationToken)
+    protected override Task HandleInternal(string[] args, CancellationToken cancellationToken)
     {
         var version = GetAppVersion();
 

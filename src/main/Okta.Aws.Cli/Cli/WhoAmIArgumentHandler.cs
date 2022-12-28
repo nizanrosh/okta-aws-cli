@@ -15,7 +15,7 @@ public class WhoAmIArgumentHandler : CliArgumentHandlerBase
         _userSettingsHandler = userSettingsHandler;
     }
 
-    public override Task HandleInternal(CancellationToken cancellationToken)
+    protected override Task HandleInternal(string[] args, CancellationToken cancellationToken)
     {
         var userSettings = Configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 

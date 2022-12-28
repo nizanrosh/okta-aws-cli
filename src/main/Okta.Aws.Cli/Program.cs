@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Okta.Aws.Cli;
 using Okta.Aws.Cli.Aws.ArnMappings;
 using Okta.Aws.Cli.Aws.Profiles;
@@ -17,8 +18,9 @@ Console.CancelKeyPress += (s, e) =>
 };
 
 var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
+    //.SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", false)
+    .AddEnvironmentVariables()
     .ConfigureArnMappings()
     .ConfigureUserSettings()
     .ConfigureProfiles()
@@ -46,9 +48,19 @@ services.AddHttpClient<IGitHubApiClient, GitHubApiClient>();
 services.AddSingleton<IVersionService, VersionService>();
 
 var provider = services.BuildServiceProvider();
+var logger = provider.GetRequiredService<ILogger<Program>>();
 
-var argumentFactory = provider.GetRequiredService<ICliArgumentFactory>();
-await argumentFactory.GetHandler(args.ElementAtOrDefault(0)).Handle(cts.Token);
+try
+{
+    var relevantArgs = args.Where(arg => arg != "--debug").ToArray();
 
-var versionService = provider.GetRequiredService<IVersionService>();
-await versionService.ExecuteAsync(cts.Token);
+    var argumentFactory = provider.GetRequiredService<ICliArgumentFactory>();
+    await argumentFactory.GetHandler(args.ElementAtOrDefault(0)).Handle(relevantArgs, cts.Token);
+
+    var versionService = provider.GetRequiredService<IVersionService>();
+    await versionService.ExecuteAsync(cts.Token);
+}
+catch (Exception e)
+{
+    logger.LogError(e, "An error has occurred");
+}

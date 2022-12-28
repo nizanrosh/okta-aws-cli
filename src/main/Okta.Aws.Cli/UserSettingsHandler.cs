@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Okta.Aws.Cli.Abstractions;
 using Okta.Aws.Cli.Constants;
+using Okta.Aws.Cli.Encryption;
 using Okta.Aws.Cli.Helpers;
 using Okta.Aws.Cli.Okta.Abstractions;
 using Sharprompt;
@@ -43,7 +44,7 @@ public class UserSettingsHandler : IUserSettingsHandler
         userSettings.OktaDomain = url;
 
         userSettings.Username = Prompt.Input<string>("Enter your Okta username", userSettings.Username);
-        userSettings.Password = Prompt.Password("Enter your Okta password");
+        userSettings.Password = AesOperation.EncryptString(Prompt.Password("Enter your Okta password"));
 
         if (Enum.TryParse(typeof(MfaTypes), userSettings.MfaType, false, out var mfaType))
         {
@@ -123,7 +124,7 @@ public class UserSettingsHandler : IUserSettingsHandler
 
         if (isPassword)
         {
-            param = Prompt.Password(message);
+            param = AesOperation.EncryptString(Prompt.Password(message));
         }
         else
         {

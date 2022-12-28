@@ -19,7 +19,7 @@ namespace Okta.Aws.Cli.FileSystem
             _config = config;
         }
 
-        public async Task UpdateCredentials(AwsCredentials credentials, CancellationToken cancellationToken)
+        public async Task UpdateCredentials(string profileName, AwsCredentials credentials, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Updating local credentials file.");
 
@@ -36,19 +36,19 @@ namespace Okta.Aws.Cli.FileSystem
                 if (!Directory.Exists(folderPath))
                 {
                     CreateDirectory(folderPath);
-                    await CreateCredentialsFile(filePath, credentials, cancellationToken);
+                    await CreateCredentialsFile(filePath, profileName, credentials, cancellationToken);
                     spinner.Succeed();
                     return;
                 }
 
                 if (!File.Exists(filePath))
                 {
-                    await CreateCredentialsFile(filePath, credentials, cancellationToken);
+                    await CreateCredentialsFile(filePath, profileName, credentials, cancellationToken);
                     spinner.Succeed();
                     return;
                 }
 
-                await UpdateFile(filePath, credentials, cancellationToken);
+                await UpdateFile(filePath, profileName, credentials, cancellationToken);
                 spinner.Succeed();
             }
             catch (Exception)
@@ -58,7 +58,7 @@ namespace Okta.Aws.Cli.FileSystem
             }
         }
 
-        private async Task UpdateFile(string filePath, AwsCredentials credentials, CancellationToken cancellationToken)
+        private async Task UpdateFile(string filePath, string profileName, AwsCredentials credentials, CancellationToken cancellationToken)
         {
             var cacheFolder = FileHelper.GetUserSettingsFolder(_config);
             var cacheFile = FileHelper.GetUserAwsBackupFile(_config);
@@ -67,9 +67,7 @@ namespace Okta.Aws.Cli.FileSystem
             File.Copy(filePath, cacheFile, true);
 
             var credentialsFile = await File.ReadAllLinesAsync(filePath, cancellationToken);
-            var lines = GetFileLines(credentials);
-
-            var profileName = _config[User.Settings.ProfileName];
+            var lines = GetFileLines(profileName, credentials);
 
             if (!credentialsFile.Contains($"[{profileName}]"))
             {
@@ -96,9 +94,9 @@ namespace Okta.Aws.Cli.FileSystem
             await File.WriteAllLinesAsync(filePath, endResultFile, cancellationToken);
         }
 
-        private Task CreateCredentialsFile(string path, AwsCredentials credentials, CancellationToken cancellationToken)
+        private Task CreateCredentialsFile(string path, string profileName, AwsCredentials credentials, CancellationToken cancellationToken)
         {
-            var lines = GetFileLines(credentials);
+            var lines = GetFileLines(profileName, credentials);
             return File.WriteAllLinesAsync(path, lines, cancellationToken);
         }
 
@@ -109,11 +107,11 @@ namespace Okta.Aws.Cli.FileSystem
             Directory.CreateDirectory(folderPath);
         }
 
-        private List<string> GetFileLines(AwsCredentials credentials)
+        private List<string> GetFileLines(string profileName, AwsCredentials credentials)
         {
             var lines = new List<string>
             {
-                $"[{_config[User.Settings.ProfileName]}]",
+                $"[{profileName}]",
                 $"aws_access_key_id={credentials.AccessKeyId}",
                 $"aws_secret_access_key={credentials.SecretAccessKey}",
                 $"region={credentials.Region}",

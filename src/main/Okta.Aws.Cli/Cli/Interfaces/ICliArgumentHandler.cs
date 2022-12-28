@@ -3,5 +3,5 @@
 public interface ICliArgumentHandler
 {
     string Argument { get; }
-    Task Handle(CancellationToken cancellationToken);
+    Task Handle(string[] args, CancellationToken cancellationToken);
 }

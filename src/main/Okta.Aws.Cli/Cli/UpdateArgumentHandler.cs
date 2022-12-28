@@ -21,7 +21,7 @@ public class UpdateArgumentHandler : CliArgumentHandlerBase
         _gitHubApiClient = gitHubApiClient;
     }
 
-    public override async Task HandleInternal(CancellationToken cancellationToken)
+    protected override async Task HandleInternal(string[] args, CancellationToken cancellationToken)
     {
         var versionInfo = Configuration.GetSection(nameof(VersionInfo)).Get<VersionInfo>();
 
