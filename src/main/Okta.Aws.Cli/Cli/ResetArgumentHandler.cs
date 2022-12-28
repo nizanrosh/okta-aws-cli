@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Sharprompt;
 
 namespace Okta.Aws.Cli.Cli;
 
@@ -10,8 +11,11 @@ public class ResetSettingsArgumentHandler : CliArgumentHandlerBase
     {
     }
 
-    protected override Task HandleInternal(string[] args, CancellationToken cancellationToken)
+    protected override async Task HandleInternal(string[] args, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var result = Prompt.Confirm("You are about to erase all configurations, are you sure?");
+        if (!result) return;
+        
+        
     }
 }
