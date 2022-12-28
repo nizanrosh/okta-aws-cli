@@ -73,6 +73,7 @@ namespace Okta.Aws.Cli.Extensions
             services.AddSingleton<ICliArgumentHandler, WhoAmIArgumentHandler>();
             //services.AddSingleton<ICliArgumentHandler, UpdateArgumentHandler>();
             services.AddSingleton<ICliArgumentHandler, SelectArgumentHandler>();
+            services.AddSingleton<ICliArgumentHandler, ResetArgumentHandler>();
 
             services.AddSingleton<IInvalidArgumentHandler, InvalidArgumentHandler>();
 

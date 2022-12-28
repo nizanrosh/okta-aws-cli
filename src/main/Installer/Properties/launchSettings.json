@@ -1,8 +1,7 @@
 {
   "profiles": {
     "Installer": {
-      "commandName": "Project",
-      "commandLineArgs": "--path \"test\""
+      "commandName": "Project"
     }
   }
 }
