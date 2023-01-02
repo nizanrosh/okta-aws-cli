@@ -72,12 +72,13 @@ public class AesOperation
         var machineName = Environment.MachineName;
 
         var key = $"{user}_{processorCount}_{machineName}";
+        if (key.Length == 32) return key;
         if (key.Length < 32)
         {
             key = key.PadRight(32, '0');
             return key;
         }
 
-        return key.Take(32).ToString()!;
+        return key.Substring(0, 32);
     }
 }

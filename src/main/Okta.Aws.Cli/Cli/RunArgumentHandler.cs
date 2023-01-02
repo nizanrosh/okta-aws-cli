@@ -24,6 +24,7 @@ public class RunArgumentHandler : CliArgumentHandlerBase
         _userSettingsHandler.SanityCheck();
         await _assumeRoleService.RunAsync(cancellationToken);
 
+        Console.ResetColor();
         Console.WriteLine();
         Console.WriteLine(FiggleFonts.Standard.Render("Goodbye"));
     }
