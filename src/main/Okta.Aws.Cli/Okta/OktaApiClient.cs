@@ -39,7 +39,7 @@ public class OktaApiClient : IOktaApiClient
             var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 
             var sessionId = await GetSessionId(sessionToken, userSettings.OktaDomain!, cancellationToken);
-            var appUrl = string.IsNullOrEmpty(userSettings.AppUrl) ? await GetAppUrl(sessionId, cancellationToken) : userSettings.AppUrl;
+            var appUrl = IsAppUrlValid(userSettings.AppUrl) ? userSettings.AppUrl : await GetAppUrl(sessionId, cancellationToken);
             ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
 
             var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
@@ -93,5 +93,14 @@ public class OktaApiClient : IOktaApiClient
 
         var html = await awsResponse.Content.ReadAsStringAsync(cancellationToken);
         return html;
+    }
+
+    private bool IsAppUrlValid(string? appUrl)
+    {
+        if (string.IsNullOrEmpty(appUrl)) return false;
+
+        if (Uri.TryCreate(appUrl, UriKind.Absolute, out _) == false) return false;
+
+        return true;
     }
 }
