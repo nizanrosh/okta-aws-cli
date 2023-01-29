@@ -27,10 +27,22 @@ public abstract class CliArgumentHandlerBase : ICliArgumentHandler
 
     private void CheckForUpdates()
     {
-        var versionInfo = Configuration.GetSection(nameof(VersionInfo)).Get<VersionInfo>();
-        if (versionInfo == null || string.Equals($"v{GetAppVersion()}", versionInfo.LatestVersion)) return;
+        try
+        {
+            var versionInfo = Configuration.GetSection(nameof(VersionInfo)).Get<VersionInfo>();
+            if (versionInfo == null) return;
 
-        PrintNewVersionAvailable(versionInfo);
+            var appVersion = new Version(GetAppVersion());
+            var latestFoundVersion = new Version(versionInfo.LatestVersion!.TrimStart('v'));
+
+            if (appVersion < latestFoundVersion == false) return;
+        
+            PrintNewVersionAvailable(versionInfo);
+        }
+        catch (Exception)
+        {
+            //ignore
+        }
     }
 
     private void PrintNewVersionAvailable(VersionInfo versionInfo)
