@@ -24,7 +24,7 @@ await Spinner.StartAsync("Installing...", async spinner =>
         FileName = "dotnet",
         WorkingDirectory = "../",
         Arguments =
-            $"publish --output {output} --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet"
+            $"publish --output {output} --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet /property:WarningLevel=0"
     });
 
     await process!.WaitForExitAsync();
@@ -39,10 +39,11 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     var name = "PATH";
     var scope = EnvironmentVariableTarget.Machine;
     var oldValue = Environment.GetEnvironmentVariable(name, scope);
-
+    var paths = oldValue!.Split(';');
+    
     if (InstallerHelper.ShouldUpdateWindowsPaths(oldValue!, appPath))
     {
-        var newPaths = InstallerHelper.GetNewWindowsPaths(oldValue!, appPath);
+        var newPaths = InstallerHelper.GetNewWindowsPaths(oldValue, appPath);
         Environment.SetEnvironmentVariable(name, newPaths, scope);
     }
 }
@@ -63,10 +64,7 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 {
     var pathsFile = "/etc/paths.d/okta-aws-cli";
 
-    if (!File.Exists(pathsFile))
-    {
-        await File.WriteAllTextAsync(pathsFile, appPath);
-    }
+    await File.WriteAllTextAsync(pathsFile, appPath);
 
     await InstallerHelper.MakeOacliExecutable(appPath);
 }
