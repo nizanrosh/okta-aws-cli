@@ -55,10 +55,12 @@ try
     var relevantArgs = args.Where(arg => arg != "--debug").ToArray();
 
     var argumentFactory = provider.GetRequiredService<ICliArgumentFactory>();
-    await argumentFactory.GetHandler(args.ElementAtOrDefault(0)).Handle(relevantArgs, cts.Token);
+    var appTask = argumentFactory.GetHandler(args.ElementAtOrDefault(0)).Handle(relevantArgs, cts.Token);
 
     var versionService = provider.GetRequiredService<IVersionService>();
-    await versionService.ExecuteAsync(cts.Token);
+    var versionTask =  versionService.ExecuteAsync(cts.Token);
+
+    await Task.WhenAll(appTask, versionTask);
 }
 catch (Exception e)
 {
