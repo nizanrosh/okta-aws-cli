@@ -39,11 +39,10 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     var name = "PATH";
     var scope = EnvironmentVariableTarget.Machine;
     var oldValue = Environment.GetEnvironmentVariable(name, scope);
-    var paths = oldValue!.Split(';');
     
     if (InstallerHelper.ShouldUpdateWindowsPaths(oldValue!, appPath))
     {
-        var newPaths = InstallerHelper.GetNewWindowsPaths(oldValue, appPath);
+        var newPaths = InstallerHelper.GetNewWindowsPaths(oldValue!, appPath);
         Environment.SetEnvironmentVariable(name, newPaths, scope);
     }
 }
