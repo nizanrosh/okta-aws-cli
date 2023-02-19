@@ -37,7 +37,7 @@ namespace Okta.Aws.Cli.Okta.Saml
             var response = await httpClient.SendAsync(httpRequest);
             var content = await response.Content.ReadAsStringAsync();
 
-            var appLinks = JsonConvert.DeserializeObject<AppLinks[]>(content);
+            var appLinks = JsonConvert.DeserializeObject<AppLink[]>(content);
 
             return appLinks?.FirstOrDefault(al => al.AppName == AppNames.Amazon)?.LinkUrl;
         }

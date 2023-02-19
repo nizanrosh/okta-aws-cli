@@ -42,6 +42,7 @@ public class SelectArgumentHandler : CliArgumentHandlerBase
         var arnMappings = _arnMappingsService.GetArnMappings();
         var selections = GetSelections(profiles.Keys, arnMappings);
 
+        Prompt.ColorSchema.Select = ConsoleColor.Yellow;
         var selection = Prompt.Select("Select a profile (use arrow keys)", selections);
         var invertedArnMappings = arnMappings.ToDictionary(x => x.Value, x => x.Key);
         if (invertedArnMappings.TryGetValue(selection, out var mapping))
