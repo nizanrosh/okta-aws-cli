@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Security;
 using Kurukuru;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -8,6 +9,7 @@ using Okta.Aws.Cli.Abstractions;
 using Okta.Aws.Cli.Constants;
 using Okta.Aws.Cli.Okta.Abstractions;
 using Okta.Aws.Cli.Okta.Constants;
+using Sharprompt;
 
 namespace Okta.Aws.Cli.Okta;
 
@@ -29,6 +31,19 @@ public class OktaApiClient : IOktaApiClient
 
     public async Task<string> GetSamlHtml(string sessionToken, CancellationToken cancellationToken)
     {
+        var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
+
+        var sessionId = await LogIn(sessionToken, cancellationToken);
+        var appUrl = IsAppUrlValid(userSettings.AppUrl) ? userSettings.AppUrl : await GetAppUrl(sessionId, cancellationToken);
+        ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
+
+        var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
+
+        return html;
+    }
+
+    private async Task<string> LogIn(string sessionToken, CancellationToken cancellationToken)
+    {
         var spinner = new Spinner("Logging in...");
         spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
@@ -39,14 +54,10 @@ public class OktaApiClient : IOktaApiClient
             var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 
             var sessionId = await GetSessionId(sessionToken, userSettings.OktaDomain!, cancellationToken);
-            var appUrl = IsAppUrlValid(userSettings.AppUrl) ? userSettings.AppUrl : await GetAppUrl(sessionId, cancellationToken);
-            ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
-
-            var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
-
+            
             spinner.Succeed();
 
-            return html;
+            return sessionId;
         }
         catch (Exception)
         {
@@ -80,9 +91,16 @@ public class OktaApiClient : IOktaApiClient
         var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-        var appLinks = JsonConvert.DeserializeObject<AppLinks[]>(content);
+        var appLinks = JsonConvert.DeserializeObject<AppLink[]>(content);
 
-        return appLinks.FirstOrDefault(al => al.AppName == AppNames.Amazon)?.LinkUrl;
+        var appUrls = appLinks.Where(al => al.AppName == AppNames.Amazon).ToArray();
+        if (!appUrls.Any()) return null;
+
+        if (appUrls.Length == 1) return appUrls.First().LinkUrl;
+
+        Prompt.ColorSchema.Select = ConsoleColor.Yellow;
+        var selection = Prompt.Select("Select app url:", appUrls, textSelector: al => $"{al.Label} ({al.LinkUrl})");
+        return selection.LinkUrl;
     }
 
     private async Task<string> GetHtml(string sessionId, string oktaDomain, string appUrl, CancellationToken cancellationToken)
