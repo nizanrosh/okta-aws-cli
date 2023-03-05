@@ -1,6 +1,8 @@
-﻿namespace Okta.Aws.Cli.Okta.Abstractions;
+﻿using Okta.Aws.Cli.Okta.Saml;
+
+namespace Okta.Aws.Cli.Okta.Abstractions;
 
 public interface IOktaSamlProvider
 {
-    Task<SamlResponse> GetSaml(CancellationToken cancellationToken);
+    Task<SamlResult> GetSaml(CancellationToken cancellationToken);
 }

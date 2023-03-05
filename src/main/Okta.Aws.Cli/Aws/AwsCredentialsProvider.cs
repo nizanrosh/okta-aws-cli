@@ -14,6 +14,7 @@ using Okta.Aws.Cli.Aws.ArnMappings;
 using Okta.Aws.Cli.Aws.Constants;
 using Okta.Aws.Cli.Aws.Profiles;
 using Okta.Aws.Cli.Constants;
+using Okta.Aws.Cli.Okta.Saml;
 using Sharprompt;
 
 namespace Okta.Aws.Cli.Aws
@@ -34,7 +35,7 @@ namespace Okta.Aws.Cli.Aws
             _profilesService = profilesService;
         }
 
-        public async Task<AwsCredentials> AssumeRole(string saml, CancellationToken cancellationToken)
+        public async Task<AwsCredentials> AssumeRole(SamlResult saml, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Assuming AWS role...");
             var spinner = new Spinner("Assuming Roles...");
@@ -44,15 +45,14 @@ namespace Okta.Aws.Cli.Aws
             {
                 spinner.Start();
 
-
-                var assertionXml = GetAssertionXml(saml);
+                var assertionXml = GetAssertionXml(saml.SelectedSaml.Token);
                 ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
 
                 var sessionDuration = GetDuration(assertionXml);
                 var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
 
                 var awsCredentialsMap =
-                    await GetSessionAwsCredentials(assertionAttributeValues, saml, sessionDuration, cancellationToken);
+                    await GetSessionAwsCredentials(assertionAttributeValues, saml.SelectedSaml.Token, sessionDuration, cancellationToken);
                 
                 await MapArnsToAliases(awsCredentialsMap, cancellationToken);
                 await SaveProfiles(awsCredentialsMap, cancellationToken);

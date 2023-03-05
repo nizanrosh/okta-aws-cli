@@ -2,5 +2,5 @@
 
 public interface IOktaApiClient
 {
-    Task<string> GetSamlHtml(string sessionToken, CancellationToken cancellationToken);
+    Task<SamlHtmlResponse> GetSamlHtml(string sessionToken, CancellationToken cancellationToken);
 }
