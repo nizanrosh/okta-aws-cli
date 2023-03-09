@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Installer;
 using Kurukuru;
@@ -15,22 +14,17 @@ var configuration = new ConfigurationBuilder()
 var appPath = InstallerHelper.GetAppPath(configuration);
 var output = InstallerHelper.GetOutputPath(configuration);
 
-await Spinner.StartAsync("Installing...", async spinner =>
+Console.WriteLine("Installing...");
+
+var process = Process.Start(new ProcessStartInfo
 {
-    spinner.SymbolSucceed = new SymbolDefinition("V", "V");
-
-    var process = Process.Start(new ProcessStartInfo
-    {
-        FileName = "dotnet",
-        WorkingDirectory = "../src/main/Okta.Aws.Cli/Okta.Aws.Cli.csproj",
-        Arguments =
-            $"publish --output {output} --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet /property:WarningLevel=0"
-    });
-
-    await process!.WaitForExitAsync();
-
-    spinner.Succeed("Installed successfully!");
+    FileName = "dotnet",
+    WorkingDirectory = "../",
+    Arguments =
+        $"publish src/main/Okta.Aws.Cli/Okta.Aws.Cli.csproj --output {output} --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet /property:WarningLevel=0"
 });
+
+await process!.WaitForExitAsync();
 
 Console.WriteLine("Adding app to machine path...\n");
 
@@ -39,7 +33,7 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
     var name = "PATH";
     var scope = EnvironmentVariableTarget.Machine;
     var oldValue = Environment.GetEnvironmentVariable(name, scope);
-    
+
     if (InstallerHelper.ShouldUpdateWindowsPaths(oldValue!, appPath))
     {
         var newPaths = InstallerHelper.GetNewWindowsPaths(oldValue!, appPath);
@@ -56,7 +50,7 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         var newPaths = InstallerHelper.GetNewLinuxPaths(paths, appPath);
         await File.WriteAllLinesAsync(linuxProfileFile, newPaths);
     }
-    
+
     await InstallerHelper.MakeOacliExecutable(appPath);
 }
 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
