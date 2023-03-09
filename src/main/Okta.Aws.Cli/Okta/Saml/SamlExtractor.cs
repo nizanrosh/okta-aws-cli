@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Linq.Expressions;
+using System.Net;
 using System.Net.Http.Json;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Configuration;
@@ -50,7 +51,8 @@ namespace Okta.Aws.Cli.Okta.Saml
             
             foreach (var additionalSaml in samlHtmlResponse.AdditionalSamls)
             {
-                additionalSamls.Add(new Abstractions.Saml(WebUtility.HtmlDecode(additionalSaml)));
+                var extractedAdditionalSaml = ExtractFromHtml(additionalSaml);
+                additionalSamls.Add(new Abstractions.Saml(WebUtility.HtmlDecode(extractedAdditionalSaml)));
             }
 
             return new SamlResult(new Abstractions.Saml(WebUtility.HtmlDecode(selectedSaml)), additionalSamls);
@@ -72,12 +74,14 @@ namespace Okta.Aws.Cli.Okta.Saml
     public class SamlResult
     {
         public Abstractions.Saml SelectedSaml { get; }
-        public IReadOnlyCollection<Abstractions.Saml>? AdditionalSamls { get; }
+        public IReadOnlyCollection<Abstractions.Saml> AdditionalSamls { get; } = Array.Empty<Abstractions.Saml>();
 
         public SamlResult(Abstractions.Saml selectedSaml, IReadOnlyCollection<Abstractions.Saml>? additionalSamls = null)
         {
             SelectedSaml = selectedSaml;
-            AdditionalSamls = additionalSamls;
+            
+            if(additionalSamls != null)
+                AdditionalSamls = additionalSamls;
         }
     }
 }
