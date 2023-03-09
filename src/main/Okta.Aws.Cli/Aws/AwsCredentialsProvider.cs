@@ -14,6 +14,8 @@ using Okta.Aws.Cli.Aws.ArnMappings;
 using Okta.Aws.Cli.Aws.Constants;
 using Okta.Aws.Cli.Aws.Profiles;
 using Okta.Aws.Cli.Constants;
+using Okta.Aws.Cli.Okta.Abstractions;
+using Okta.Aws.Cli.Okta.Saml;
 using Sharprompt;
 
 namespace Okta.Aws.Cli.Aws
@@ -34,35 +36,51 @@ namespace Okta.Aws.Cli.Aws
             _profilesService = profilesService;
         }
 
-        public async Task<AwsCredentials> AssumeRole(string saml, CancellationToken cancellationToken)
+        public async Task<AwsCredentials> AssumeRole(SamlResult saml, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Assuming AWS role...");
             var spinner = new Spinner("Assuming Roles...");
             spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
+            var globalCredentialsMap = new Dictionary<string, AwsCredentials>();
+
             try
             {
                 spinner.Start();
 
+                // var assertionXml = GetAssertionXml(saml.SelectedSaml.Token);
+                // ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
+                //
+                // var sessionDuration = GetDuration(assertionXml);
+                // var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
+                //
+                // var awsCredentialsMap =
+                //     await GetSessionAwsCredentials(assertionAttributeValues, saml.SelectedSaml.Token, sessionDuration, cancellationToken);
 
-                var assertionXml = GetAssertionXml(saml);
-                ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
+                var (selectedCredentialsMap, selectedAssertionAttributeValues) =
+                    await GetAwsCredentialsMap(saml.SelectedSaml, cancellationToken);
 
-                var sessionDuration = GetDuration(assertionXml);
-                var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
+                globalCredentialsMap = globalCredentialsMap.Union(selectedCredentialsMap)
+                    .ToDictionary(x => x.Key, x => x.Value);
 
-                var awsCredentialsMap =
-                    await GetSessionAwsCredentials(assertionAttributeValues, saml, sessionDuration, cancellationToken);
-                
-                await MapArnsToAliases(awsCredentialsMap, cancellationToken);
-                await SaveProfiles(awsCredentialsMap, cancellationToken);
+                foreach (var additionalSaml in saml.AdditionalSamls)
+                {
+                    var (additionalCredentialsMap, _) =
+                        await GetAwsCredentialsMap(additionalSaml, cancellationToken);
+                    
+                    globalCredentialsMap = globalCredentialsMap.Union(additionalCredentialsMap)
+                        .ToDictionary(x => x.Key, x => x.Value);
+                }
+
+                await MapArnsToAliases(globalCredentialsMap, cancellationToken);
+                await SaveProfiles(globalCredentialsMap, cancellationToken);
 
                 spinner.Succeed();
 
-                var (principalArn, roleArn) = GetArnsToAssume(assertionAttributeValues);
+                var (principalArn, roleArn) = GetArnsToAssume(selectedAssertionAttributeValues);
 
-                var awsCredentials = awsCredentialsMap[$"{principalArn},{roleArn}"];
-                
+                var awsCredentials = selectedCredentialsMap[$"{principalArn},{roleArn}"];
+
                 return awsCredentials;
             }
             catch (Exception e)
@@ -71,6 +89,20 @@ namespace Okta.Aws.Cli.Aws
                 _logger.LogError(e, "An error has occurred while assuming role.");
                 throw;
             }
+        }
+
+        private async Task<(Dictionary<string, AwsCredentials>, List<string>)> GetAwsCredentialsMap(Saml saml,
+            CancellationToken cancellationToken)
+        {
+            var assertionXml = GetAssertionXml(saml.Token);
+            ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
+
+            var sessionDuration = GetDuration(assertionXml);
+            var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
+
+            var credentialsMap = await GetSessionAwsCredentials(assertionAttributeValues, saml.Token, sessionDuration,
+                cancellationToken);
+            return (credentialsMap, assertionAttributeValues);
         }
 
         private Stream GetSamlStream(string saml)
@@ -248,7 +280,8 @@ namespace Okta.Aws.Cli.Aws
             return credentials;
         }
 
-        private async Task SaveProfiles(Dictionary<string, AwsCredentials> credentials, CancellationToken cancellationToken)
+        private async Task SaveProfiles(Dictionary<string, AwsCredentials> credentials,
+            CancellationToken cancellationToken)
         {
             var profiles = credentials.Select(x =>
             {

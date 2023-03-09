@@ -29,17 +29,39 @@ public class OktaApiClient : IOktaApiClient
         _httpClientHandler = httpClientHandler;
     }
 
-    public async Task<string> GetSamlHtml(string sessionToken, CancellationToken cancellationToken)
+    public async Task<SamlHtmlResponse> GetSamlHtml(string sessionToken, CancellationToken cancellationToken)
     {
         var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 
         var sessionId = await LogIn(sessionToken, cancellationToken);
-        var appUrl = IsAppUrlValid(userSettings.AppUrl) ? userSettings.AppUrl : await GetAppUrl(sessionId, cancellationToken);
-        ArgumentNullException.ThrowIfNull(appUrl, nameof(appUrl));
 
-        var html = await GetHtml(sessionId, userSettings.OktaDomain!, appUrl, cancellationToken);
+        if (IsAppUrlValid(userSettings.AppUrl))
+        {
+            var validAppUrlSaml = await GetHtml(sessionId, userSettings.OktaDomain!, userSettings.AppUrl!, cancellationToken);
+            return new SamlHtmlResponse(validAppUrlSaml);
+        }
 
-        return html;
+        var appLinks = await GetMultipleAppLinks(sessionId, cancellationToken);
+        ArgumentNullException.ThrowIfNull(appLinks, nameof(appLinks));
+
+        if (appLinks.Length == 1)
+        {
+            return new SamlHtmlResponse(appLinks.First().LinkUrl!);
+        }
+
+        Prompt.ColorSchema.Select = ConsoleColor.Yellow;
+        var selection = Prompt.Select("Select app url:", appLinks, textSelector: al => $"{al.Label} ({al.LinkUrl})");
+
+        var tasks = new List<Task<string>> {GetHtml(sessionId, userSettings.OktaDomain!, selection.LinkUrl!, cancellationToken)};
+
+        foreach (var appLink in appLinks.Where(al => al.LinkUrl != selection.LinkUrl))
+        {
+            tasks.Add(GetHtml(sessionId, userSettings.OktaDomain!, appLink.LinkUrl!, cancellationToken));
+        }
+
+        var results = await Task.WhenAll(tasks);
+
+        return new SamlHtmlResponse(results.First(), results[Range.StartAt(1)]);
     }
 
     private async Task<string> LogIn(string sessionToken, CancellationToken cancellationToken)
@@ -54,7 +76,7 @@ public class OktaApiClient : IOktaApiClient
             var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
 
             var sessionId = await GetSessionId(sessionToken, userSettings.OktaDomain!, cancellationToken);
-            
+
             spinner.Succeed();
 
             return sessionId;
@@ -103,6 +125,24 @@ public class OktaApiClient : IOktaApiClient
         return selection.LinkUrl;
     }
 
+    private async Task<AppLink[]?> GetMultipleAppLinks(string sessionId, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Getting aws app url...");
+
+        var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{_configuration[User.Settings.OktaDomain]}/api/v1/users/me/appLinks");
+        httpRequest.Headers.Add("Cookie", $"sid={sessionId}");
+
+        var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        var appLinks = JsonConvert.DeserializeObject<AppLink[]>(content);
+
+        var awsAppLinks = appLinks.Where(al => al.AppName == AppNames.Amazon).ToArray();
+        if (!awsAppLinks.Any()) return null;
+
+        return awsAppLinks;
+    }
+
     private async Task<string> GetHtml(string sessionId, string oktaDomain, string appUrl, CancellationToken cancellationToken)
     {
         _httpClientHandler.CookieContainer.Add(new Uri(oktaDomain), new Cookie("sid", sessionId));
@@ -120,5 +160,17 @@ public class OktaApiClient : IOktaApiClient
         if (Uri.TryCreate(appUrl, UriKind.Absolute, out _) == false) return false;
 
         return true;
+    }
+}
+
+public class SamlHtmlResponse
+{
+    public string SelectedSaml { get; }
+    public IReadOnlyCollection<string>? AdditionalSamls { get; }
+
+    public SamlHtmlResponse(string selectedSaml, IReadOnlyCollection<string>? additionalSamls = null)
+    {
+        SelectedSaml = selectedSaml;
+        AdditionalSamls = additionalSamls;
     }
 }

@@ -22,7 +22,7 @@ await Spinner.StartAsync("Installing...", async spinner =>
     var process = Process.Start(new ProcessStartInfo
     {
         FileName = "dotnet",
-        WorkingDirectory = "../",
+        WorkingDirectory = "../src/main/Okta.Aws.Cli/Okta.Aws.Cli.csproj",
         Arguments =
             $"publish --output {output} --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet /property:WarningLevel=0"
     });

@@ -30,7 +30,7 @@ namespace Okta.Aws.Cli
             try
             {
                 var response = await _oktaSamlProvider.GetSaml(cancellationToken);
-                var credentials = await _awsAuthenticator.AssumeRole(response.Token, cancellationToken);
+                var credentials = await _awsAuthenticator.AssumeRole(response, cancellationToken);
                 await _credentialsUpdater.UpdateCredentials(_configuration[User.Settings.ProfileName], credentials, cancellationToken);
             }
             catch (Exception e)

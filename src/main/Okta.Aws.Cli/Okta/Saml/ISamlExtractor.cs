@@ -4,5 +4,5 @@ namespace Okta.Aws.Cli.Okta.Saml;
 
 public interface ISamlExtractor
 {
-    SamlResponse ExtractSamlFromHtml(string html);
+    SamlResult ExtractSamlFromHtml(SamlHtmlResponse html);
 }

@@ -1,10 +1,10 @@
 ﻿namespace Okta.Aws.Cli.Okta.Abstractions
 {
-    public class SamlResponse
+    public class Saml
     {
         public string Token { get; }
 
-        public SamlResponse(string token)
+        public Saml(string token)
         {
             Token = token;
         }
