@@ -44,6 +44,7 @@ namespace Okta.Aws.Cli.Okta.Saml
         private SamlResult GetSamlExtractorResult(SamlHtmlResponse samlHtmlResponse)
         {
             var selectedSaml = ExtractFromHtml(samlHtmlResponse.SelectedSaml);
+            ArgumentNullException.ThrowIfNull(selectedSaml, nameof(selectedSaml));
 
             if (samlHtmlResponse.AdditionalSamls == null || !samlHtmlResponse.AdditionalSamls.Any()) return new SamlResult(new Abstractions.Saml(WebUtility.HtmlDecode(selectedSaml)));
 
@@ -52,22 +53,31 @@ namespace Okta.Aws.Cli.Okta.Saml
             foreach (var additionalSaml in samlHtmlResponse.AdditionalSamls)
             {
                 var extractedAdditionalSaml = ExtractFromHtml(additionalSaml);
+                if(string.IsNullOrEmpty(extractedAdditionalSaml)) continue;
                 additionalSamls.Add(new Abstractions.Saml(WebUtility.HtmlDecode(extractedAdditionalSaml)));
             }
 
             return new SamlResult(new Abstractions.Saml(WebUtility.HtmlDecode(selectedSaml)), additionalSamls);
         }
 
-        private string ExtractFromHtml(string html)
+        private string? ExtractFromHtml(string html)
         {
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
+            try
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(html);
 
-            var samlAttribute = doc.DocumentNode.SelectNodes("//form//input").FirstOrDefault();
-            var samlToken = samlAttribute?.GetAttributeValue("value", null);
-            ArgumentNullException.ThrowIfNull(samlToken, nameof(samlToken));
+                var samlAttribute = doc.DocumentNode.SelectNodes("//form//input").FirstOrDefault();
+                var samlToken = samlAttribute?.GetAttributeValue("value", null);
+                ArgumentNullException.ThrowIfNull(samlToken, nameof(samlToken));
 
-            return samlToken;
+                return samlToken;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed extracting SAML from HTML.");
+                return null;
+            }
         }
     }
 
