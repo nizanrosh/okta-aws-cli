@@ -1,5 +1,4 @@
 ﻿using Abstractions;
-using Amazon.Runtime.SharedInterfaces;
 using Cocona;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +8,6 @@ using Okta.Aws.Cli.Aws.Profiles;
 using Okta.Aws.Cli.Extensions;
 using Okta.Aws.Cli.GitHub;
 using Okta.Aws.Cli.Okta;
-using Okta.Aws.Cli.Okta.Abstractions;
 using Okta.Aws.Cli.Okta.Abstractions.Interfaces;
 
 var cts = new CancellationTokenSource();
@@ -57,13 +55,6 @@ var provider = builder.Services.BuildServiceProvider();
 
 var app = builder.Build();
 
-
-// app.AddCommand("run",
-//     [IgnoreUnknownOptions] async (IRunArgumentHandler handler) =>
-//     {
-//         await handler.Handle(cts.Token);
-//     });
-
 app.AddRunCommand(provider, cts.Token)
     .AddConfigureCommand(cts.Token)
     .AddLogoutCommand(cts.Token)
@@ -72,20 +63,3 @@ app.AddRunCommand(provider, cts.Token)
     .AddWhoAmICommand(cts.Token);
 
 await app.RunAsync();
-
-// try
-// {
-//     var relevantArgs = args.Where(arg => arg != "--debug").ToArray();
-//
-//     var argumentFactory = provider.GetRequiredService<ICliArgumentFactory>();
-//     var appTask = argumentFactory.GetHandler(args.ElementAtOrDefault(0)).Handle(relevantArgs, cts.Token);
-//
-//     var versionService = provider.GetRequiredService<IVersionService>();
-//     var versionTask =  versionService.ExecuteAsync(cts.Token);
-//
-//     await Task.WhenAll(appTask, versionTask);
-// }
-// catch (Exception e)
-// {
-//     logger.LogError(e, "An error has occurred");
-// }
