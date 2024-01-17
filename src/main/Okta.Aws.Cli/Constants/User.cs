@@ -13,6 +13,10 @@ namespace Okta.Aws.Cli.Constants
             public const string MfaType = $"{nameof(UserSettings)}:{nameof(MfaType)}";
             public const string ProfileName = $"{nameof(UserSettings)}:{nameof(ProfileName)}";
             public const string Region = $"{nameof(UserSettings)}:{nameof(Region)}";
+            public const string DefaultAwsAccount = $"{nameof(UserSettings)}:{nameof(DefaultAwsAccount)}";
+            public const string DefaultAwsAccountAlias = $"{nameof(UserSettings)}:{nameof(DefaultAwsAccountAlias)}";
+            public const string DefaultAwsRole = $"{nameof(UserSettings)}:{nameof(DefaultAwsRole)}";
+            public const string DefaultAwsRoleAlias = $"{nameof(UserSettings)}:{nameof(DefaultAwsRoleAlias)}";
         }
     }
 }

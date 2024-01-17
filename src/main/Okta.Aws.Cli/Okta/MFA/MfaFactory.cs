@@ -1,4 +1,5 @@
 ﻿using Okta.Aws.Cli.Okta.Abstractions;
+using Okta.Aws.Cli.Okta.Abstractions.Interfaces;
 
 namespace Okta.Aws.Cli.Okta.MFA
 {

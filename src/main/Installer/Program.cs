@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Installer;
-using Kurukuru;
+using Installer.Installers;
 using Microsoft.Extensions.Configuration;
 
 Console.WriteLine("Installing okta-aws-cli...\n");
@@ -16,51 +16,9 @@ var output = InstallerHelper.GetOutputPath(configuration);
 
 Console.WriteLine("Installing...");
 
-var process = Process.Start(new ProcessStartInfo
-{
-    FileName = "dotnet",
-    WorkingDirectory = "../",
-    Arguments =
-        $"publish src/main/Okta.Aws.Cli/Okta.Aws.Cli.csproj --output {output} --source https://api.nuget.org/v3/index.json --configuration Release --verbosity quiet /property:WarningLevel=0"
-});
-
-await process!.WaitForExitAsync();
-
-Console.WriteLine("Adding app to machine path...\n");
-
-if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-{
-    var name = "PATH";
-    var scope = EnvironmentVariableTarget.Machine;
-    var oldValue = Environment.GetEnvironmentVariable(name, scope);
-
-    if (InstallerHelper.ShouldUpdateWindowsPaths(oldValue!, appPath))
-    {
-        var newPaths = InstallerHelper.GetNewWindowsPaths(oldValue!, appPath);
-        Environment.SetEnvironmentVariable(name, newPaths, scope);
-    }
-}
-else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-{
-    var linuxProfileFile = $"/home/{Environment.UserName}/.profile";
-    var paths = await File.ReadAllLinesAsync(linuxProfileFile);
-
-    if (InstallerHelper.ShouldUpdateLinuxPaths(paths, appPath))
-    {
-        var newPaths = InstallerHelper.GetNewLinuxPaths(paths, appPath);
-        await File.WriteAllLinesAsync(linuxProfileFile, newPaths);
-    }
-
-    await InstallerHelper.MakeOacliExecutable(appPath);
-}
-else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-{
-    var pathsFile = "/etc/paths.d/okta-aws-cli";
-
-    await File.WriteAllTextAsync(pathsFile, appPath);
-
-    await InstallerHelper.MakeOacliExecutable(appPath);
-}
+var factory = new InstallersFactory();
+var installer = factory.GetInstaller();
+await installer.Install();
 
 Console.WriteLine("Done, press any key to exit...");
 Console.ReadKey();

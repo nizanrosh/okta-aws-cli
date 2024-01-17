@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Tracing;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 using Amazon;
 using Amazon.IdentityManagement;
 using Amazon.Runtime;
@@ -13,6 +12,7 @@ using Okta.Aws.Cli.Aws.Abstractions;
 using Okta.Aws.Cli.Aws.ArnMappings;
 using Okta.Aws.Cli.Aws.Constants;
 using Okta.Aws.Cli.Aws.Profiles;
+using Okta.Aws.Cli.Cli.Configurations;
 using Okta.Aws.Cli.Constants;
 using Okta.Aws.Cli.Okta.Abstractions;
 using Okta.Aws.Cli.Okta.Saml;
@@ -36,11 +36,12 @@ namespace Okta.Aws.Cli.Aws
             _profilesService = profilesService;
         }
 
-        public async Task<AwsCredentials> AssumeRole(SamlResult saml, CancellationToken cancellationToken)
+        public async Task<AwsCredentials> AssumeRole(RunConfiguration runConfiguration, SamlResult saml,
+            CancellationToken cancellationToken)
         {
             _logger.LogInformation("Assuming AWS role...");
             var spinner = new Spinner("Assuming Roles...");
-            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
+            //spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
             var globalCredentialsMap = new Dictionary<string, AwsCredentials>();
 
@@ -48,17 +49,8 @@ namespace Okta.Aws.Cli.Aws
             {
                 spinner.Start();
 
-                // var assertionXml = GetAssertionXml(saml.SelectedSaml.Token);
-                // ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
-                //
-                // var sessionDuration = GetDuration(assertionXml);
-                // var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
-                //
-                // var awsCredentialsMap =
-                //     await GetSessionAwsCredentials(assertionAttributeValues, saml.SelectedSaml.Token, sessionDuration, cancellationToken);
-
                 var (selectedCredentialsMap, selectedAssertionAttributeValues) =
-                    await GetAwsCredentialsMap(saml.SelectedSaml, cancellationToken);
+                    await GetAwsCredentialsMap(saml.SelectedSaml, runConfiguration, cancellationToken);
 
                 globalCredentialsMap = globalCredentialsMap.Union(selectedCredentialsMap)
                     .ToDictionary(x => x.Key, x => x.Value);
@@ -66,8 +58,8 @@ namespace Okta.Aws.Cli.Aws
                 foreach (var additionalSaml in saml.AdditionalSamls)
                 {
                     var (additionalCredentialsMap, _) =
-                        await GetAwsCredentialsMap(additionalSaml, cancellationToken);
-                    
+                        await GetAwsCredentialsMap(additionalSaml, runConfiguration, cancellationToken);
+
                     globalCredentialsMap = globalCredentialsMap.Union(additionalCredentialsMap)
                         .ToDictionary(x => x.Key, x => x.Value);
                 }
@@ -75,11 +67,23 @@ namespace Okta.Aws.Cli.Aws
                 await MapArnsToAliases(globalCredentialsMap, cancellationToken);
                 await SaveProfiles(globalCredentialsMap, cancellationToken);
 
+                AwsCredentials awsCredentials;
+                if (ShouldUseDefaultRole(runConfiguration))
+                {
+                    _logger.LogInformation(
+                        $"Using role account {runConfiguration.FullArnAlias} ({runConfiguration.FullArn})");
+                    awsCredentials = selectedCredentialsMap[runConfiguration.FullArn];
+                    spinner.Info($"Using saved role: {runConfiguration.FullArnAlias} ({runConfiguration.FullArn})");
+                }
+                else
+                {
+                    var arnsResult = GetArnsToAssume(selectedAssertionAttributeValues);
+                    awsCredentials = selectedCredentialsMap[$"{arnsResult.PrincipalArn},{arnsResult.RoleArn}"];
+                    awsCredentials.FullArn = arnsResult.FullArn;
+                    awsCredentials.FullArnAlias = arnsResult.FullArnAlias;
+                }
+
                 spinner.Succeed();
-
-                var (principalArn, roleArn) = GetArnsToAssume(selectedAssertionAttributeValues);
-
-                var awsCredentials = selectedCredentialsMap[$"{principalArn},{roleArn}"];
 
                 return awsCredentials;
             }
@@ -92,12 +96,15 @@ namespace Okta.Aws.Cli.Aws
         }
 
         private async Task<(Dictionary<string, AwsCredentials>, List<string>)> GetAwsCredentialsMap(Saml saml,
+            RunConfiguration runConfiguration,
             CancellationToken cancellationToken)
         {
             var assertionXml = GetAssertionXml(saml.Token);
             ArgumentNullException.ThrowIfNull(assertionXml, nameof(assertionXml));
 
-            var sessionDuration = GetDuration(assertionXml);
+            var sessionDuration = runConfiguration.SessionTime != 0
+                ? runConfiguration.SessionTime
+                : GetDuration(assertionXml);
             var assertionAttributeValues = GetAssertionAttributeValues(assertionXml);
 
             var credentialsMap = await GetSessionAwsCredentials(assertionAttributeValues, saml.Token, sessionDuration,
@@ -115,7 +122,7 @@ namespace Okta.Aws.Cli.Aws
             return stream;
         }
 
-        private (string, string) GetArnsToAssume(List<string> attributeValues)
+        private ArnsResult GetArnsToAssume(List<string> attributeValues)
         {
             var arnMappings = _arnMappingsService.GetArnMappings();
             var selections = new List<string>();
@@ -140,13 +147,13 @@ namespace Okta.Aws.Cli.Aws
                 var userSelection = Prompt.Select("Select a role (use arrow keys)", selections);
                 if (invertedArnMappings.TryGetValue(userSelection, out var attributeValue))
                 {
-                    return SplitArns(attributeValue);
+                    return SplitArns(attributeValue, userSelection);
                 }
 
-                return SplitArns(userSelection);
+                return SplitArns(userSelection, userSelection);
             }
 
-            return SplitArns(attributeValues.First());
+            return SplitArns(attributeValues.First(), attributeValues.First());
         }
 
         private async Task MapArnsToAliases(Dictionary<string, AwsCredentials> sessionCredentials,
@@ -163,7 +170,7 @@ namespace Okta.Aws.Cli.Aws
                     if (arnMappings.TryGetValue(attributeValue, out _)) continue;
                     shouldUpdateMappingsFile = true;
 
-                    var (principalArn, roleArn) = SplitArns(attributeValue);
+                    var (_, roleArn) = SplitArns(attributeValue, attributeValue);
                     var region = _configuration[User.Settings.Region];
 
                     var awsSessionCredentials = new SessionAWSCredentials(awsCredentials.AccessKeyId,
@@ -200,7 +207,7 @@ namespace Okta.Aws.Cli.Aws
             {
                 try
                 {
-                    var (principalArn, roleArn) = SplitArns(attributeValue);
+                    var (principalArn, roleArn) = SplitArns(attributeValue, attributeValue);
 
                     var internalCredentials =
                         await GetInternalAwsCredentials(saml, principalArn, roleArn, duration, cancellationToken);
@@ -221,10 +228,10 @@ namespace Okta.Aws.Cli.Aws
             return credentials;
         }
 
-        private (string, string) SplitArns(string attributeValue)
+        private ArnsResult SplitArns(string attributeValue, string userSelection)
         {
             var arns = attributeValue.Split(',');
-            return (arns.First(), arns.Last());
+            return new ArnsResult(attributeValue, arns.First(), arns.Last(), userSelection);
         }
 
         private int GetDuration(AssertionModel.Response assertionResponse)
@@ -240,7 +247,7 @@ namespace Okta.Aws.Cli.Aws
             return attributeValue;
         }
 
-        private AssertionModel.Response? GetAssertionXml(string saml)
+        private AssertionModel.Response GetAssertionXml(string saml)
         {
             var xmlSerializer = new XmlSerializer(typeof(AssertionModel.Response));
             var assertionXml = xmlSerializer.Deserialize(GetSamlStream(saml)) as AssertionModel.Response;
@@ -297,6 +304,17 @@ namespace Okta.Aws.Cli.Aws
             });
 
             await _profilesService.UpdateProfilesFile(profiles, cancellationToken);
+        }
+
+        private bool ShouldUseDefaultRole(RunConfiguration runConfiguration)
+        {
+            if (string.IsNullOrEmpty(runConfiguration.SubCommand) == false &&
+                runConfiguration.SubCommand is Commands.Sub.Save or Commands.Sub.Fresh) return false;
+
+            if (string.IsNullOrEmpty(runConfiguration.FullArn) ||
+                string.IsNullOrEmpty(runConfiguration.FullArnAlias)) return false;
+
+            return true;
         }
     }
 }

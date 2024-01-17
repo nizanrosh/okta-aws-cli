@@ -28,7 +28,7 @@ namespace Okta.Aws.Cli.Okta.Saml
             return GetSamlExtractorResult(samlHtmlResponse);
         }
 
-        private async Task<string?> GetAppUrl(HttpClient httpClient, string sessionId)
+        private async Task<string> GetAppUrl(HttpClient httpClient, string sessionId)
         {
             var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{_configuration[User.Settings.OktaDomain]}/api/v1/users/me/appLinks");
             httpRequest.Headers.Add("Cookie", $"sid={sessionId}");
@@ -60,7 +60,7 @@ namespace Okta.Aws.Cli.Okta.Saml
             return new SamlResult(new Abstractions.Saml(WebUtility.HtmlDecode(selectedSaml)), additionalSamls);
         }
 
-        private string? ExtractFromHtml(string html)
+        private string ExtractFromHtml(string html)
         {
             try
             {
@@ -85,8 +85,10 @@ namespace Okta.Aws.Cli.Okta.Saml
     {
         public Abstractions.Saml SelectedSaml { get; }
         public IReadOnlyCollection<Abstractions.Saml> AdditionalSamls { get; } = Array.Empty<Abstractions.Saml>();
+        
+        public SelectedAppUrl SelectedAppUrl { get; set; }
 
-        public SamlResult(Abstractions.Saml selectedSaml, IReadOnlyCollection<Abstractions.Saml>? additionalSamls = null)
+        public SamlResult(Abstractions.Saml selectedSaml, IReadOnlyCollection<Abstractions.Saml> additionalSamls = null)
         {
             SelectedSaml = selectedSaml;
             

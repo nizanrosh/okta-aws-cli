@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text;
 using Amazon;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -25,11 +26,22 @@ public class UserSettingsHandler : IUserSettingsHandler
     {
         var userSettingsFolder = FileHelper.GetUserSettingsFolder(_configuration);
         var userSettingsFile = FileHelper.GetUserSettingsFile(_configuration);
-        if (!Directory.Exists(userSettingsFolder)) Directory.CreateDirectory(userSettingsFolder);
+        if (!Directory.Exists(userSettingsFolder)) Directory.CreateDirectory(userSettingsFolder!);
 
         var userSettings = CreateUserSettings();
         var payload = JsonConvert.SerializeObject(new UserSettingsWrapper(userSettings));
         await File.WriteAllTextAsync(userSettingsFile, payload, cancellationToken);
+    }
+
+    public Task SaveCurrentUserSettingsToFile(CancellationToken cancellationToken)
+    {
+        var userSettingsFolder = FileHelper.GetUserSettingsFolder(_configuration);
+        var userSettingsFile = FileHelper.GetUserSettingsFile(_configuration);
+        if (!Directory.Exists(userSettingsFolder)) Directory.CreateDirectory(userSettingsFolder!);
+
+        var userSettings = _configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
+        var payload = JsonConvert.SerializeObject(new UserSettingsWrapper(userSettings));
+        return File.WriteAllTextAsync(userSettingsFile, payload, cancellationToken);
     }
 
     private UserSettings CreateUserSettings()
@@ -39,13 +51,15 @@ public class UserSettingsHandler : IUserSettingsHandler
         var url = Prompt.Input<string>("Enter your Okta domain", userSettings.OktaDomain);
         while (!Uri.TryCreate(url, UriKind.Absolute, out _))
         {
-            url = Prompt.Input<string>("The input is not a valid url, please enter a valid url", userSettings.OktaDomain);
+            url = Prompt.Input<string>("The input is not a valid url, please enter a valid url",
+                userSettings.OktaDomain);
         }
 
         userSettings.OktaDomain = url;
 
         userSettings.Username = Prompt.Input<string>("Enter your Okta username", userSettings.Username);
-        userSettings.Password = AesOperation.EncryptString(Prompt.Password("Enter your Okta password"));
+        userSettings.Password = AesOperation.EncryptString(Prompt.Password("Enter your Okta password",
+            validators: new[] { Validators.Required() }));
 
         if (Enum.TryParse(typeof(MfaTypes), userSettings.MfaType, false, out var mfaType))
         {
@@ -67,7 +81,8 @@ public class UserSettingsHandler : IUserSettingsHandler
         var regionResult = RegionEndpoint.GetBySystemName(region);
         while (regionResult.DisplayName == "Unknown")
         {
-            region = Prompt.Input<string>("The input is not a valid aws region, please enter a valid region", userSettings.Region);
+            region = Prompt.Input<string>("The input is not a valid aws region, please enter a valid region",
+                userSettings.Region);
             regionResult = RegionEndpoint.GetBySystemName(region);
         }
 
@@ -102,7 +117,7 @@ public class UserSettingsHandler : IUserSettingsHandler
         {
             PromptForParameter("Enter your Okta password", User.Settings.Password, true);
         }
-        else if(!IsBase64String(userSettings.Password))
+        else if (!IsBase64String(userSettings.Password))
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("Your password is not encrypted, run oacli configure to encrypt.");
@@ -126,7 +141,8 @@ public class UserSettingsHandler : IUserSettingsHandler
         }
     }
 
-    private void PromptForParameter(string message, string configPath, bool isPassword = false, string? defaultValue = null, string? placeholder = null)
+    private void PromptForParameter(string message, string configPath, bool isPassword = false,
+        string defaultValue = null, string placeholder = null)
     {
         string param;
 
@@ -138,6 +154,7 @@ public class UserSettingsHandler : IUserSettingsHandler
         {
             param = Prompt.Input<string>(message, defaultValue, placeholder);
         }
+
         _configuration[configPath] = param;
     }
 
@@ -146,10 +163,10 @@ public class UserSettingsHandler : IUserSettingsHandler
         var param = Prompt.Select<T>(message)!.ToString();
         _configuration[configPath] = param;
     }
-    
+
     public bool IsBase64String(string base64)
     {
         var buffer = new Span<byte>(new byte[base64.Length]);
-        return Convert.TryFromBase64String(base64, buffer , out _);
+        return Convert.TryFromBase64String(base64, buffer, out _);
     }
 }

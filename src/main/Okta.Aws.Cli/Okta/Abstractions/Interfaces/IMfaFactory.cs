@@ -1,4 +1,4 @@
-﻿namespace Okta.Aws.Cli.Okta.Abstractions
+﻿namespace Okta.Aws.Cli.Okta.Abstractions.Interfaces
 {
     public interface IMfaFactory
     {

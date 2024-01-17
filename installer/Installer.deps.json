@@ -6,8 +6,9 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v6.0": {
-      "Installer/1.4.0": {
+      "Installer/1.6.0": {
         "dependencies": {
+          "Abstractions": "1.5.1",
           "Kurukuru": "1.4.2",
           "Microsoft.Extensions.Configuration": "6.0.0",
           "Microsoft.Extensions.Configuration.CommandLine": "6.0.0"
@@ -70,11 +71,16 @@
           }
         }
       },
-      "System.Runtime.CompilerServices.Unsafe/6.0.0": {}
+      "System.Runtime.CompilerServices.Unsafe/6.0.0": {},
+      "Abstractions/1.5.1": {
+        "runtime": {
+          "Abstractions.dll": {}
+        }
+      }
     }
   },
   "libraries": {
-    "Installer/1.4.0": {
+    "Installer/1.6.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -120,6 +126,11 @@
       "sha512": "sha512-/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",
       "path": "system.runtime.compilerservices.unsafe/6.0.0",
       "hashPath": "system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
+    },
+    "Abstractions/1.5.1": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }

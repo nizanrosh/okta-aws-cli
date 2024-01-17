@@ -13,7 +13,7 @@ public class CliArgumentFactory : ICliArgumentFactory
         _handlers = handlers.ToDictionary(h => h.Argument, h => h);
     }
 
-    public ICliArgumentHandler GetHandler(string? arg)
+    public ICliArgumentHandler GetHandler(string arg)
     {
         if (string.IsNullOrEmpty(arg))
         {

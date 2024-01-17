@@ -20,7 +20,7 @@ public abstract class CliArgumentHandlerBase : ICliArgumentHandler
     public virtual async Task Handle(string[] args, CancellationToken cancellationToken)
     {
         await HandleInternal(args, cancellationToken);
-        CheckForUpdates();
+        //CheckForUpdates();
     }
 
     protected abstract Task HandleInternal(string[] args, CancellationToken cancellationToken);
@@ -35,7 +35,7 @@ public abstract class CliArgumentHandlerBase : ICliArgumentHandler
             var appVersion = new Version(GetAppVersion());
             var latestFoundVersion = new Version(versionInfo.LatestVersion!.TrimStart('v'));
 
-            if (appVersion < latestFoundVersion == false) return;
+            if (appVersion >= latestFoundVersion) return;
         
             PrintNewVersionAvailable(versionInfo);
         }

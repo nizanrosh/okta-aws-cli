@@ -2,5 +2,5 @@
 
 public interface ICliArgumentFactory
 {
-    ICliArgumentHandler GetHandler(string? arg);
+    ICliArgumentHandler GetHandler(string arg);
 }

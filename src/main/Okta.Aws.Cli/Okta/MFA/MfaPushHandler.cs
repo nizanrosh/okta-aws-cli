@@ -25,7 +25,8 @@ namespace Okta.Aws.Cli.Okta.MFA
         {
             FactorId = factorId,
             AutoPush = true,
-            StateToken = stateToken
+            StateToken = stateToken,
+            RememberDevice = true
         };
     }
 }

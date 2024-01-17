@@ -67,7 +67,7 @@ public class VersionService : IVersionService
         return task;
     }
 
-    private bool ShouldQueryForNewVersion(VersionInfo? versionInfo)
+    private bool ShouldQueryForNewVersion(VersionInfo versionInfo)
     {
         if (versionInfo == null) return true;
 

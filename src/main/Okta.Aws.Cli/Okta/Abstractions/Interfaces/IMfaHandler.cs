@@ -1,6 +1,6 @@
 ﻿using Okta.Auth.Sdk;
 
-namespace Okta.Aws.Cli.Okta.Abstractions
+namespace Okta.Aws.Cli.Okta.Abstractions.Interfaces
 {
     public interface IMfaHandler
     {

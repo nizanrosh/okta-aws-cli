@@ -1,7 +1,10 @@
-﻿namespace Okta.Aws.Cli
+﻿using Okta.Aws.Cli.Aws.Abstractions;
+using Okta.Aws.Cli.Cli.Configurations;
+
+namespace Okta.Aws.Cli
 {
     public interface IOktaAwsAssumeRoleService
     {
-        Task RunAsync(CancellationToken cancellationToken);
+        Task<AwsCredentials> RunAsync(RunConfiguration runConfiguration, CancellationToken cancellationToken);
     }
 }

@@ -2,9 +2,12 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Okta.Aws.Cli.Aws;
+using Okta.Aws.Cli.Aws.Abstractions;
+using Okta.Aws.Cli.Cli.Configurations;
 using Okta.Aws.Cli.Constants;
 using Okta.Aws.Cli.FileSystem;
 using Okta.Aws.Cli.Okta.Abstractions;
+using Okta.Aws.Cli.Okta.Abstractions.Interfaces;
 
 namespace Okta.Aws.Cli
 {
@@ -25,17 +28,22 @@ namespace Okta.Aws.Cli
             _credentialsUpdater = credentialsUpdater;
         }
 
-        public async Task RunAsync(CancellationToken cancellationToken)
+        public async Task<AwsCredentials> RunAsync(RunConfiguration runConfiguration, CancellationToken cancellationToken)
         {
             try
             {
-                var response = await _oktaSamlProvider.GetSaml(cancellationToken);
-                var credentials = await _awsAuthenticator.AssumeRole(response, cancellationToken);
+                var response = await _oktaSamlProvider.GetSaml(runConfiguration, cancellationToken);
+                var credentials = await _awsAuthenticator.AssumeRole(runConfiguration, response, cancellationToken);
+                credentials.SelectedAwsAccount = response.SelectedAppUrl.AppUrl;
+                credentials.SelectedAwsAccountAlias = response.SelectedAppUrl.Name;
                 await _credentialsUpdater.UpdateCredentials(_configuration[User.Settings.ProfileName], credentials, cancellationToken);
+
+                return credentials;
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "An error has occurred.");
+                return null;
             }
         }
     }
