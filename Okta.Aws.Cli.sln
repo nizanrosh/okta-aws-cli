@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Installer", "src\main\Insta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Okta.Aws.Cli.UnitTests", "src\tests\Okta.Aws.Cli.UnitTests\Okta.Aws.Cli.UnitTests.csproj", "{F8F8008C-D1E2-4BA8-8572-9CB362C9EDB0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abstractions", "src\Abstractions\Abstractions.csproj", "{13EFD23F-6617-47B4-8D06-5DFDEEAA6866}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{F8F8008C-D1E2-4BA8-8572-9CB362C9EDB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8F8008C-D1E2-4BA8-8572-9CB362C9EDB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8F8008C-D1E2-4BA8-8572-9CB362C9EDB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13EFD23F-6617-47B4-8D06-5DFDEEAA6866}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13EFD23F-6617-47B4-8D06-5DFDEEAA6866}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13EFD23F-6617-47B4-8D06-5DFDEEAA6866}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13EFD23F-6617-47B4-8D06-5DFDEEAA6866}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

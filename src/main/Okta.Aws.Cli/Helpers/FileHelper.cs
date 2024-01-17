@@ -44,7 +44,7 @@ public static class FileHelper
         if (platform == OSPlatform.OSX)
             return $"/Users/{Environment.UserName}/.okta-aws-cli";
 
-        throw new ArgumentException($"OS not supported.");
+        throw new ArgumentException("OS not supported.");
     }
 
     public static string GetUserSettingsFile(IConfiguration configuration) =>
@@ -61,4 +61,7 @@ public static class FileHelper
     
     public static string GetProfilesFile(IConfiguration configuration) => 
         $"{GetUserSettingsFolder(configuration)}/profiles.json";
+    
+    public static string GetSessionFile(IConfiguration configuration) =>
+        $"{GetUserSettingsFolder(configuration)}/session.json";
 }

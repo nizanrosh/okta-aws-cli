@@ -1,4 +1,6 @@
-﻿using Kurukuru;
+﻿using System.Net;
+using System.Net.Http.Json;
+using Kurukuru;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -7,6 +9,7 @@ using Okta.Aws.Cli.Abstractions;
 using Okta.Aws.Cli.Constants;
 using Okta.Aws.Cli.Encryption;
 using Okta.Aws.Cli.Okta.Abstractions;
+using Okta.Aws.Cli.Okta.Abstractions.Interfaces;
 using Okta.Sdk.Abstractions;
 using Okta.Sdk.Abstractions.Configuration;
 
@@ -45,11 +48,11 @@ namespace Okta.Aws.Cli.Okta
 
             return authenticationResponse;
         }
-
+        
         private async Task<IAuthenticationResponse> GetAuthenticationResponse(IAuthenticationClient client, UserSettings settings, CancellationToken cancellationToken)
         {
             using var spinner = new Spinner($"Starting authentication for {settings.Username}");
-            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
+            //spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
             try
             {
@@ -60,22 +63,23 @@ namespace Okta.Aws.Cli.Okta
                 var authenticationResponse = await client.AuthenticateAsync(new AuthenticateOptions
                 {
                     Username = settings.Username,
-                    Password = AesOperation.DecryptString(settings.Password!)
+                    Password = AesOperation.DecryptString(settings.Password),
+                    UserAgent = "okta-aws-cli/1.5.1 (Macintosh; Intel Mac OS X 10_15_7) okta-aws-cli/1.5.1 (CLI for using Okta to generate credentials for AWS) Chrome/120.0.0.0",
                 }, cancellationToken);
-
+                
                 spinner.Succeed();
 
                 return authenticationResponse;
             }
             catch (OktaApiException oktaApiException)
             {
-                _logger.LogError(oktaApiException, "An okta api exception has occurred.");
+                _logger.LogError(oktaApiException, "An Okta Api exception has occurred.");
                 spinner.Fail("Authentication failed, are you sure your password is correct?");
                 throw;
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "");
+                _logger.LogError(e, "An error has occurred");
                 spinner.Fail();
                 throw;
             }
@@ -85,7 +89,7 @@ namespace Okta.Aws.Cli.Okta
             UserSettings settings, IAuthenticationResponse originalResponse, CancellationToken cancellationToken)
         {
             using var spinner = new Spinner($"Prompting for MFA of type {settings.MfaType}, check your phone.");
-            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
+            //spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
             try
             {

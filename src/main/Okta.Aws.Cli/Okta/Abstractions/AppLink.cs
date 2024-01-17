@@ -6,12 +6,12 @@ namespace Okta.Aws.Cli.Okta.Abstractions
     public class AppLink
     {
         [DataMember(Name = "linkUrl")]
-        public string? LinkUrl { get; set; }
+        public string LinkUrl { get; set; }
 
         [DataMember(Name = "appName")]
-        public string? AppName { get; set; }
+        public string AppName { get; set; }
         
         [DataMember(Name = "label")]
-        public string? Label { get; set; }
+        public string Label { get; set; }
     }
 }

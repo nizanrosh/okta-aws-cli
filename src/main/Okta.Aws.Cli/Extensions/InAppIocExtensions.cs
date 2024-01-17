@@ -5,6 +5,7 @@ using Okta.Aws.Cli.Cli.Interfaces;
 using Okta.Aws.Cli.FileSystem;
 using Okta.Aws.Cli.Okta;
 using Okta.Aws.Cli.Okta.Abstractions;
+using Okta.Aws.Cli.Okta.Abstractions.Interfaces;
 using Okta.Aws.Cli.Okta.MFA;
 using Okta.Aws.Cli.Okta.Saml;
 
@@ -20,8 +21,9 @@ namespace Okta.Aws.Cli.Extensions
 
             services.AddSingleton<IOktaAuthenticator, OktaAuthenticator>();
             services.AddSingleton<IOktaSamlProvider, OktaSamlProvider>();
-            services.AddSingleton<IOktaApiClient, OktaApiClient>();
+            services.AddSingleton<IOktaApiHttpClient, OktaApiHttpClient>();
             services.AddSingleton<ISamlExtractor, SamlExtractor>();
+            services.AddSingleton<IOktaSessionManager, OktaSessionManager>();
 
             return services;
         }
@@ -67,13 +69,14 @@ namespace Okta.Aws.Cli.Extensions
         {
             services.AddSingleton<ICliArgumentFactory, CliArgumentFactory>();
 
-            services.AddSingleton<ICliArgumentHandler, RunArgumentHandler>();
-            services.AddSingleton<ICliArgumentHandler, ConfigureArgumentHandler>();
-            services.AddSingleton<ICliArgumentHandler, VersionArgumentHandler>();
-            services.AddSingleton<ICliArgumentHandler, WhoAmIArgumentHandler>();
+            services.AddSingleton<IRunArgumentHandler, RunArgumentHandler>();
+            services.AddSingleton<IConfigureArgumentHandler, ConfigureArgumentHandler>();
+            services.AddSingleton<ILogoutArgumentHandler, LogoutArgumentHandler>();
+            services.AddSingleton<IResetArgumentHandler, ResetArgumentHandler>();
+            services.AddSingleton<ISelectArgumentHandler, SelectArgumentHandler>();
+            services.AddSingleton<IWhoAmIArgumentHandler, WhoAmIArgumentHandler>();
+            //services.AddSingleton<ICliArgumentHandler, VersionArgumentHandler>();
             //services.AddSingleton<ICliArgumentHandler, UpdateArgumentHandler>();
-            services.AddSingleton<ICliArgumentHandler, SelectArgumentHandler>();
-            services.AddSingleton<ICliArgumentHandler, ResetArgumentHandler>();
 
             services.AddSingleton<IInvalidArgumentHandler, InvalidArgumentHandler>();
 

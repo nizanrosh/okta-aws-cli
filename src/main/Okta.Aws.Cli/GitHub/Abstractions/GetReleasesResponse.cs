@@ -5,7 +5,7 @@ namespace Okta.Aws.Cli.GitHub.Abstractions;
 
 public class GetReleasesResponse
 {
-    public IList<ReleaseMetadata>? Releases { get; set; }
+    public IList<ReleaseMetadata> Releases { get; set; }
 }
 
 [DataContract]
@@ -13,13 +13,13 @@ public class ReleaseMetadata
 {
     [JsonPropertyName("name")]
     [DataMember(Name = "name")]
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
     [JsonPropertyName("tarball_url")]
     [DataMember(Name = "tarball_url")]
-    public string? TarballUrl { get; set; }
+    public string TarballUrl { get; set; }
 
     [JsonPropertyName("zipball_url")]
     [DataMember(Name = "zipball_url")]
-    public string? ZipballUrl { get; set; }
+    public string ZipballUrl { get; set; }
 }

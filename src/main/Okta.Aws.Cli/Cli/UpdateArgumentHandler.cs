@@ -74,7 +74,7 @@ public class UpdateArgumentHandler : CliArgumentHandlerBase
         return (Version.Parse(latestVersion), Version.Parse(currentVersion));
     }
 
-    private (bool, string) CanUpdate(VersionInfo? versionInfo)
+    private (bool, string) CanUpdate(VersionInfo versionInfo)
     {
         if (versionInfo == null || string.IsNullOrEmpty(versionInfo.LatestVersion) ||
             string.IsNullOrEmpty(versionInfo.CurrentVersion))

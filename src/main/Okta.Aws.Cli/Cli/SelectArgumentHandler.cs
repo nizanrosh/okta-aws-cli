@@ -7,28 +7,28 @@ using Okta.Aws.Cli.Abstractions;
 using Okta.Aws.Cli.Aws.Abstractions;
 using Okta.Aws.Cli.Aws.ArnMappings;
 using Okta.Aws.Cli.Aws.Profiles;
+using Okta.Aws.Cli.Cli.Interfaces;
 using Okta.Aws.Cli.Constants;
 using Okta.Aws.Cli.FileSystem;
 using Sharprompt;
 
 namespace Okta.Aws.Cli.Cli;
 
-public class SelectArgumentHandler : CliArgumentHandlerBase
+public class SelectArgumentHandler : ISelectArgumentHandler
 {
     private readonly IProfilesService _profilesService;
     private readonly ICredentialsUpdater _credentialsUpdater;
     private readonly IArnMappingsService _arnMappingsService;
-    public override string Argument => "select";
-
-    public SelectArgumentHandler(IConfiguration configuration, IProfilesService profilesService,
-        ICredentialsUpdater credentialsUpdater, IArnMappingsService arnMappingsService) : base(configuration)
+    
+    public SelectArgumentHandler(IProfilesService profilesService,
+        ICredentialsUpdater credentialsUpdater, IArnMappingsService arnMappingsService)
     {
         _profilesService = profilesService;
         _credentialsUpdater = credentialsUpdater;
         _arnMappingsService = arnMappingsService;
     }
 
-    protected override Task HandleInternal(string[] args, CancellationToken cancellationToken)
+    public Task Handle(string profileName, CancellationToken cancellationToken)
     {
         var profiles = _profilesService.GetProfiles();
         if (profiles.Count == 0)
@@ -36,8 +36,6 @@ public class SelectArgumentHandler : CliArgumentHandlerBase
             Console.WriteLine("There are no available profiles.");
             return Task.CompletedTask;
         }
-
-        var profileName = GetProfileName(args);
 
         var arnMappings = _arnMappingsService.GetArnMappings();
         var selections = GetSelections(profiles.Keys, arnMappings);
@@ -51,34 +49,6 @@ public class SelectArgumentHandler : CliArgumentHandlerBase
         }
 
         return UpdateLocalCredentials(profileName, profiles[selection], cancellationToken);
-    }
-
-    private string GetProfileName(string[] args)
-    {
-        var potentialArg = args.ElementAtOrDefault(1);
-        if (string.IsNullOrEmpty(potentialArg)) return GetProfileNameFromConfig();
-
-        if (potentialArg == "--profile")
-        {
-            var potentialProfileName = args.ElementAtOrDefault(2);
-            if (string.IsNullOrEmpty(potentialProfileName))
-            {
-                Console.WriteLine("Invalid profile name provided.");
-                throw new ArgumentException("Invalid profile name provided.");
-            }
-
-            return potentialProfileName;
-        }
-
-        return GetProfileNameFromConfig();
-    }
-
-    private string GetProfileNameFromConfig()
-    {
-        var profileName = Configuration[User.Settings.ProfileName];
-        if (string.IsNullOrEmpty(profileName)) return "default";
-
-        return profileName;
     }
 
     private Task UpdateLocalCredentials(string profileName, OktaAwsCliProfile profile, CancellationToken cancellationToken)

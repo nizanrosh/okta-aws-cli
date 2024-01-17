@@ -2,7 +2,7 @@
   "profiles": {
     "Okta.Aws.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "run --debug",
+      "commandLineArgs": "run --session-time 3600",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }

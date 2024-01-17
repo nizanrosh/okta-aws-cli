@@ -2,8 +2,8 @@
 
 public class VersionInfo
 {
-    public string? LatestVersion { get; set; }
-    public string? CurrentVersion { get; set; }
+    public string LatestVersion { get; set; }
+    public string CurrentVersion { get; set; }
     public DateTime? LastChecked { get; set; }
 }
 

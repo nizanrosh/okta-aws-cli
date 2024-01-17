@@ -24,7 +24,7 @@ namespace Okta.Aws.Cli.FileSystem
             _logger.LogInformation("Updating local credentials file.");
 
             var spinner = new Spinner("Updating local credentials file.");
-            spinner.SymbolSucceed = new SymbolDefinition("V", "V");
+            //spinner.SymbolSucceed = new SymbolDefinition("V", "V");
 
             try
             {
