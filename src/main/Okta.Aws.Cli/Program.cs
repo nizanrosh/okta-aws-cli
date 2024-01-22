@@ -10,6 +10,9 @@ using Okta.Aws.Cli.GitHub;
 using Okta.Aws.Cli.Okta;
 using Okta.Aws.Cli.Okta.Abstractions.Interfaces;
 
+var currentDir = Directory.GetCurrentDirectory();
+Console.WriteLine(currentDir);
+
 var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (s, e) =>
 {
@@ -19,10 +22,15 @@ Console.CancelKeyPress += (s, e) =>
 
 var builder = CoconaApp.CreateBuilder(args);
 
-var appSettingsPath = $"{AppPathResolver.GetAppPath()}/appsettings.json";
+var configTest = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", false)
+    .Build();
+
 builder.Host.ConfigureAppConfiguration((_, configBuilder) =>
 {
-    configBuilder.AddJsonFile(appSettingsPath, false)
+    //configBuilder.AddJsonFile(appSettingsPath, false)
+    configBuilder
+        .AddConfiguration(configTest)
         .AddEnvironmentVariables()
         .ConfigureArnMappings()
         .ConfigureUserSettings()

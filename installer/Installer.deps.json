@@ -8,7 +8,7 @@
     ".NETCoreApp,Version=v6.0": {
       "Installer/1.6.0": {
         "dependencies": {
-          "Abstractions": "1.5.1",
+          "Abstractions": "1.6.0",
           "Kurukuru": "1.4.2",
           "Microsoft.Extensions.Configuration": "6.0.0",
           "Microsoft.Extensions.Configuration.CommandLine": "6.0.0"
@@ -72,7 +72,7 @@
         }
       },
       "System.Runtime.CompilerServices.Unsafe/6.0.0": {},
-      "Abstractions/1.5.1": {
+      "Abstractions/1.6.0": {
         "runtime": {
           "Abstractions.dll": {}
         }
@@ -127,7 +127,7 @@
       "path": "system.runtime.compilerservices.unsafe/6.0.0",
       "hashPath": "system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
     },
-    "Abstractions/1.5.1": {
+    "Abstractions/1.6.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
