@@ -19,10 +19,14 @@ Console.CancelKeyPress += (s, e) =>
 
 var builder = CoconaApp.CreateBuilder(args);
 
-var appSettingsPath = $"{AppPathResolver.GetAppPath()}/appsettings.json";
+//This ensures that the appsettings.json file is taken from where the app is installed and not current dir. 
+var appSettingsConfig = new ConfigurationManager()
+    .AddJsonFile("appsettings.json", false)
+    .Build();
+
 builder.Host.ConfigureAppConfiguration((_, configBuilder) =>
 {
-    configBuilder.AddJsonFile(appSettingsPath, false)
+    configBuilder.AddConfiguration(appSettingsConfig)
         .AddEnvironmentVariables()
         .ConfigureArnMappings()
         .ConfigureUserSettings()
