@@ -28,19 +28,6 @@ namespace Okta.Aws.Cli.Okta.Saml
             return GetSamlExtractorResult(samlHtmlResponse);
         }
 
-        private async Task<string> GetAppUrl(HttpClient httpClient, string sessionId)
-        {
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{_configuration[User.Settings.OktaDomain]}/api/v1/users/me/appLinks");
-            httpRequest.Headers.Add("Cookie", $"sid={sessionId}");
-
-            var response = await httpClient.SendAsync(httpRequest);
-            var content = await response.Content.ReadAsStringAsync();
-
-            var appLinks = JsonConvert.DeserializeObject<AppLink[]>(content);
-
-            return appLinks?.FirstOrDefault(al => al.AppName == AppNames.Amazon)?.LinkUrl;
-        }
-
         private SamlResult GetSamlExtractorResult(SamlHtmlResponse samlHtmlResponse)
         {
             var selectedSaml = ExtractFromHtml(samlHtmlResponse.SelectedSaml);

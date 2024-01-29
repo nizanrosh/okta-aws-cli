@@ -53,7 +53,9 @@ public class OktaApiHttpClient : IOktaApiHttpClient
             if (appLinks.Length == 1)
             {
                 var appLink = appLinks.First();
-                return new SamlHtmlResponse(appLink.LinkUrl!)
+                var validAppUrlSaml = await GetHtml(sessionId, userSettings.OktaDomain!, appLink.LinkUrl,
+                    cancellationToken);
+                return new SamlHtmlResponse(validAppUrlSaml)
                 {
                     SelectedAppUrl = new SelectedAppUrl(appLink.Label, appLink.LinkUrl)
                 };
