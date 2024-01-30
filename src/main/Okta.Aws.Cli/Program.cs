@@ -10,9 +10,6 @@ using Okta.Aws.Cli.GitHub;
 using Okta.Aws.Cli.Okta;
 using Okta.Aws.Cli.Okta.Abstractions.Interfaces;
 
-var currentDir = Directory.GetCurrentDirectory();
-Console.WriteLine(currentDir);
-
 var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (s, e) =>
 {
@@ -22,15 +19,14 @@ Console.CancelKeyPress += (s, e) =>
 
 var builder = CoconaApp.CreateBuilder(args);
 
-var configTest = new ConfigurationBuilder()
+//This ensures that the appsettings.json file is taken from where the app is installed and not current dir. 
+var appSettingsConfig = new ConfigurationManager()
     .AddJsonFile("appsettings.json", false)
     .Build();
 
 builder.Host.ConfigureAppConfiguration((_, configBuilder) =>
 {
-    //configBuilder.AddJsonFile(appSettingsPath, false)
-    configBuilder
-        .AddConfiguration(configTest)
+    configBuilder.AddConfiguration(appSettingsConfig)
         .AddEnvironmentVariables()
         .ConfigureArnMappings()
         .ConfigureUserSettings()

@@ -16,7 +16,10 @@ public class LogoutArgumentHandler : ILogoutArgumentHandler
     public Task Handle(CancellationToken cancellationToken)
     {
         var userSettingsFolder = FileHelper.GetUserSettingsFolder(_configuration);
-        File.Delete($"{userSettingsFolder}/session.json");
+        var sessionFilePath = $"{userSettingsFolder}/session.json"; 
+        if (!File.Exists(sessionFilePath)) return Task.CompletedTask;
+        
+        File.Delete(sessionFilePath);
         
         return Task.CompletedTask;
     }
