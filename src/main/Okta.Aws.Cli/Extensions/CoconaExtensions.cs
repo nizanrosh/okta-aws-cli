@@ -13,7 +13,8 @@ public static class CoconaExtensions
     public static CoconaApp AddWhoAmICommand(this CoconaApp app, CancellationToken cancellationToken)
     {
         app.AddCommand(Commands.WhoAmI,
-            [IgnoreUnknownOptions] async (IWhoAmIArgumentHandler handler) => await handler.Handle(cancellationToken))
+                [IgnoreUnknownOptions] async (IWhoAmIArgumentHandler handler) =>
+                    await handler.Handle(cancellationToken))
             .WithDescription("Lists the current user.");
 
         return app;
@@ -40,7 +41,7 @@ public static class CoconaExtensions
     public static CoconaApp AddResetCommand(this CoconaApp app, CancellationToken cancellationToken)
     {
         app.AddCommand(Commands.Reset,
-            async (IResetArgumentHandler handler) => await handler.Handle(cancellationToken))
+                async (IResetArgumentHandler handler) => await handler.Handle(cancellationToken))
             .WithDescription("Removes *all* user settings.");
 
         return app;
@@ -57,8 +58,8 @@ public static class CoconaExtensions
     public static CoconaApp AddConfigureCommand(this CoconaApp app, CancellationToken cancellationToken)
     {
         app.AddCommand(Commands.Configure,
-            [IgnoreUnknownOptions] async (IConfigureArgumentHandler handler) =>
-                await handler.Handle(cancellationToken))
+                [IgnoreUnknownOptions] async (IConfigureArgumentHandler handler) =>
+                    await handler.Handle(cancellationToken))
             .WithDescription("Configure user settings.");
 
         return app;
@@ -74,13 +75,13 @@ public static class CoconaExtensions
         app.AddCommand(Commands.Run,
             [IgnoreUnknownOptions] async () =>
             {
-                var runConfig = BuildRunConfiguration(configuration, Commands.Run);
+                var runConfig = BuildRunConfiguration(userSettingsHandler, configuration, Commands.Run);
                 await runArgumentHandler.Handle(runConfig, cancellationToken);
             }).OptionLikeCommand(x =>
         {
-            x.Add(Commands.Sub.Save, new[] { Commands.Sub.ShortSave },[IgnoreUnknownOptions] async () =>
+            x.Add(Commands.Sub.Save, new[] { Commands.Sub.ShortSave }, [IgnoreUnknownOptions] async () =>
             {
-                var runConfig = BuildRunConfiguration(configuration, Commands.Sub.Save);
+                var runConfig = BuildRunConfiguration(userSettingsHandler, configuration, Commands.Sub.Save);
                 var credentials = await runArgumentHandler.Handle(runConfig, cancellationToken);
 
                 configuration[User.Settings.DefaultAwsAccount] = credentials.SelectedAwsAccount;
@@ -93,13 +94,13 @@ public static class CoconaExtensions
             x.Add(Commands.Sub.SessionTime, new[] { Commands.Sub.ShortSessionTime }, [IgnoreUnknownOptions]
                 async ([Argument] int sessionTime) =>
                 {
-                    var runConfig = BuildRunConfiguration(configuration, Commands.Sub.SessionTime, sessionTime);
+                    var runConfig = BuildRunConfiguration(userSettingsHandler, configuration, Commands.Sub.SessionTime, sessionTime);
                     await runArgumentHandler.Handle(runConfig, cancellationToken);
                 }).WithDescription("Role session time duration in seconds.");
 
             x.Add(Commands.Sub.Fresh, new[] { Commands.Sub.ShortFresh }, [IgnoreUnknownOptions] async () =>
             {
-                var runConfig = BuildRunConfiguration(configuration, Commands.Sub.Fresh);
+                var runConfig = BuildRunConfiguration(userSettingsHandler, configuration, Commands.Sub.Fresh);
                 await runArgumentHandler.Handle(runConfig, cancellationToken);
             }).WithDescription("Run without saved selections.");
         });
@@ -107,9 +108,11 @@ public static class CoconaExtensions
         return app;
     }
 
-    private static RunConfiguration BuildRunConfiguration(IConfiguration configuration, string subCommand,
+    private static RunConfiguration BuildRunConfiguration(IUserSettingsHandler userSettingsHandler, IConfiguration configuration, string subCommand,
         int sessionTime = 0)
     {
+        userSettingsHandler.SanityCheck();
+        
         var userSettings = configuration.GetSection(nameof(UserSettings)).Get<UserSettings>();
         var defaultAwsAccount = userSettings.DefaultAwsAccount;
         var defaultAwsAccountAlias = userSettings.DefaultAwsAccountAlias;

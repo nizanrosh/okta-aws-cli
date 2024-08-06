@@ -180,14 +180,25 @@ namespace Okta.Aws.Cli.Aws
                         new AmazonIdentityManagementServiceClient(awsSessionCredentials,
                             RegionEndpoint.GetBySystemName(region));
 
-                    var aliases = await awsIdentityClient.ListAccountAliasesAsync(cancellationToken);
-                    var customAlias = $"{string.Join('-', aliases.AccountAliases)}-{roleArn.Split('/').Last()}";
+                    string customAlias;
+                    try
+                    {
+                        var aliases = await awsIdentityClient.ListAccountAliasesAsync(cancellationToken);
+                        if (aliases.AccountAliases.Count == 0)
+                            throw new ArgumentException($"There are no account aliases for {attributeValue}.");
+                        customAlias = $"{string.Join('-', aliases.AccountAliases)}-{roleArn.Split('/').Last()}";
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, $"An error has occurred while trying to fetch account alias for {attributeValue}.");
+                        customAlias = attributeValue;
+                    }
 
                     arnMappings[attributeValue] = customAlias;
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e, $"An error has occurred while querying for account alias of {attributeValue}");
+                    _logger.LogError(e, $"An error has occurred while mapping account alias of {attributeValue}");
                 }
             }
 
