@@ -114,6 +114,11 @@ namespace Okta.Aws.Cli.Okta
 
         private string GetFactorId(IAuthenticationResponse authenticationResponse, string mfaType)
         {
+            if (mfaType == "code")
+            {
+                mfaType = "token:software:totp";
+            }
+            
             var resources = JsonConvert.DeserializeObject<AuthenticationFactors>(authenticationResponse.Embedded.GetRaw());
             var factorId = resources.Factors?.FirstOrDefault(f => f.FactorType == mfaType)?.Id;
             if (string.IsNullOrEmpty(factorId))

@@ -7,6 +7,8 @@ namespace Okta.Aws.Cli.Okta.Abstractions
         [Display(Name = "push")]
         push,
         [Display(Name = "sms")]
-        sms
+        sms,
+        [Display(Name = "code")]
+        code
     }
 }
